@@ -88,7 +88,7 @@ void Init()
     image = stbi_load("textures/wood.png", &width, &height, &nrChannels, 3);
     if (image)
     {
-        glTexImage2D(GL_TEXTURE_2D, 4, GL_RGB, width, height, 1, GL_RGB, GL_UNSIGNED_BYTE, image);
+        glTexImage2D(GL_TEXTURE_2D, 8, GL_RGB, width, height, 1, GL_RGB, GL_UNSIGNED_BYTE, image);
         gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, width, height, GL_RGB, GL_UNSIGNED_BYTE, image);
     }
 
@@ -123,6 +123,7 @@ void displayDebug()
 void displayFloor(float size)
 {
     GLfloat specref[] = {1.0, 1.0, 1.0, 1.0};
+    glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
     glMaterialfv(GL_FRONT, GL_SPECULAR, specref);
     glMateriali(GL_FRONT, GL_SHININESS, 128);
 
@@ -144,6 +145,7 @@ void displayFloor(float size)
     glEnd();
     glDisable(GL_TEXTURE_2D);
     glPopMatrix();
+    glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SINGLE_COLOR);
 }
 
 void rectCuboid(float x, float y, float z)
@@ -263,9 +265,9 @@ void simpleNURBS(float width, float height, float curvature)
 
 void displayTable(float posx, float posz, float height, float sizex, float sizez, float thickness)
 {
-    glColor3f(0.7, 0.4, 0.2);
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, textures[TEXTURE_WOOD]);
+    glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
     glPushMatrix();
     glTranslatef(posx, height - thickness, posz);
     rectCuboid(sizex, thickness, sizez);
@@ -298,6 +300,7 @@ void displayTable(float posx, float posz, float height, float sizex, float sizez
     glPopMatrix();
 
     glDisable(GL_TEXTURE_2D);
+    glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SINGLE_COLOR);
 }
 
 void displayChair(float posx, float posz, float height, float seat_width, float seat_depth, float thickness)
@@ -305,9 +308,9 @@ void displayChair(float posx, float posz, float height, float seat_width, float 
     float chair_back_total_height = 7.0;
     float chair_back_height = seat_width / 2.0;
     float chair_back_width = seat_width - 1.0;
-    glColor3f(0.7, 0.4, 0.2);
     glPushMatrix();
     displayTable(posx, posz, height, seat_width, seat_depth, thickness);
+    glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, textures[TEXTURE_WOOD]);
     glTranslatef(posx, height, posz);
@@ -327,12 +330,13 @@ void displayChair(float posx, float posz, float height, float seat_width, float 
     glPopMatrix();
     glPopMatrix();
     glDisable(GL_TEXTURE_2D);
+    glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SINGLE_COLOR);
 }
 
 void displayFridge(float posx, float posz, float width, float height, float depth)
 {
     float door_split = height * 0.7;
-    glColor3f(0.5, 0.5, 0.5);
+    glColor3f(0.7, 0.7, 0.7);
     glPushMatrix();
     glTranslatef(posx, 0.0, posz);
     rectCuboid(width, height, depth);
