@@ -46,7 +46,7 @@ void Init()
     glMatrixMode(GL_MODELVIEW);
 
     // Init illumination
-    GLfloat light_position[] = {120.0, 120.0, 50.0, 0.0};
+    GLfloat light_position[] = {60.0, 60.0, 60.0, 0.0};
     GLfloat white_light[] = {1.0, 1.0, 1.0, 1.0};
     GLfloat lmodel_ambient[] = {0.5, 0.5, 0.5, 1.0};
     glLightfv(GL_LIGHT0, GL_POSITION, light_position);
@@ -123,8 +123,8 @@ void displayDebug()
 void displayFloor(float size)
 {
     GLfloat specref[] = {1.0, 1.0, 1.0, 1.0};
-    glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
     glMaterialfv(GL_FRONT, GL_SPECULAR, specref);
+    glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
     glMateriali(GL_FRONT, GL_SHININESS, 128);
 
     glPushMatrix();
@@ -269,7 +269,7 @@ void displayTable(float posx, float posz, float height, float sizex, float sizez
     glBindTexture(GL_TEXTURE_2D, textures[TEXTURE_WOOD]);
     glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
     glPushMatrix();
-    glTranslatef(posx, height - thickness, posz);
+    glTranslatef(posx, height, posz);
     rectCuboid(sizex, thickness, sizez);
 
     // Leg 1
@@ -355,6 +355,41 @@ void displayFridge(float posx, float posz, float width, float height, float dept
 
 void displayRobot()
 {
+    glPushMatrix();
+    // Draw body
+
+    glPushMatrix();
+    // Draw neck
+    // Transform head
+    // Draw head
+    glPopMatrix();
+
+    glPushMatrix();
+    // Draw left wheel
+    glPopMatrix();
+
+    glPushMatrix();
+    // Draw right wheel
+    glPopMatrix();
+
+    glPushMatrix();
+    // Transform shoulder
+    // Draw shoulder
+    // Draw upper arm
+    // Draw elbow
+
+    glPushMatrix();
+    // Transform lower arm
+    // Draw lower arm
+
+    glPushMatrix();
+    // Transform hand
+    // Draw hand
+
+    glPopMatrix(); // hand
+    glPopMatrix(); // lower arm
+    glPopMatrix(); // upper arm
+    glPopMatrix(); // body
 }
 
 void Display()
