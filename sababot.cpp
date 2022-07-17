@@ -353,38 +353,67 @@ void displayFridge(float posx, float posz, float width, float height, float dept
     glPopMatrix();
 }
 
+GLfloat robotx = 0.0, robotz = 0.0, robot_y_rotate = 0.0;
+GLfloat head_x_rotate = 0.0, head_y_rotate = 0.0;
+GLfloat shoulder_x_rotate = 0.0, shoulder_z_rotate = 0.0;
+GLfloat elbow_x_rotate = 0.0, hand_y_rotate = 0.0;
+
 void displayRobot()
 {
-    glPushMatrix();
-    // Draw body
+    GLfloat body_width = 6.0, body_height = 10.0, body_depth = 3.0;
+    GLfloat neck_length = 1.0;
 
+    glColor3f(0.5, 0.0, 0.0);
+    
     glPushMatrix();
-    // Draw neck
-    // Transform head
-    // Draw head
+    glTranslatef(robotx, 1.0, robotz);
+    glRotatef(robot_y_rotate, 0.0, 1.0, 0.0);
+    
+    /* BODY */
+    glPushMatrix();
+    // TODO: Shear
+    rectCuboid(body_width, body_height, body_depth);
+    glPopMatrix();
+
+    /* NECK */
+    glPushMatrix();
+    glTranslatef(body_width / 2.0, body_height, body_depth / 2.0);
+    glRotatef(-90.0, 1.0, 0.0, 0.0);
+    gluCylinder(gluNewQuadric(), 1.0, 1.0, neck_length, 10.0, 10.0);
+    glPopMatrix();
+
+    /* HEAD */
+    glPushMatrix();
+    glTranslatef((body_width * 0.25) / 2.0, body_height + neck_length, 0.0);
+    glRotatef(head_x_rotate, 1.0, 0.0, 0.0);
+    glRotatef(head_y_rotate, 0.0, 1.0, 0.0);
+    rectCuboid(body_width * 0.75, body_height * 0.5, body_depth);
     glPopMatrix();
 
     glPushMatrix();
-    // Draw left wheel
+    // TODO: translate
+    // TODO: Draw left wheel
     glPopMatrix();
 
     glPushMatrix();
-    // Draw right wheel
+    // TODO: translate
+    // TODO: Draw right wheel
     glPopMatrix();
 
     glPushMatrix();
-    // Transform shoulder
-    // Draw shoulder
-    // Draw upper arm
-    // Draw elbow
+    glRotatef(shoulder_x_rotate, 1.0, 0.0, 0.0);
+    glRotatef(shoulder_z_rotate, 0.0, 0.0, 1.0);
+    // TODO: Draw shoulder
+    // TODO: Draw upper arm
+    // TODO: Draw elbow
 
     glPushMatrix();
-    // Transform lower arm
-    // Draw lower arm
+    glRotatef(elbow_x_rotate, 1.0, 0.0, 0.0);
+    // TODO: Draw lower arm
 
     glPushMatrix();
-    // Transform hand
-    // Draw hand
+    glRotatef(hand_y_rotate, 0.0, 1.0, 0.0);
+    // TODO: Draw hand
 
     glPopMatrix(); // hand
     glPopMatrix(); // lower arm
@@ -400,6 +429,7 @@ void Display()
     displayTable(-10.0, 30.0, 10.0, 20.0, 10.0, 1.0);
     displayChair(-2.0, 20.0, 6.0, 6.0, 5.0, 1.0);
     displayFridge(-20.0, -50.0, 8.0, 24.0, 6.0);
+    displayRobot();
     displayDebug();
     glutSwapBuffers();
 }
