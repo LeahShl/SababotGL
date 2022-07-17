@@ -9,7 +9,7 @@
 GLuint textures[2];
 
 GLint winWidth = 1200, winHeight = 800;
-GLfloat xcam = 100.0, ycam = 50.0, zcam = 100.0;
+GLfloat xcam = -10.0, ycam = 40.0, zcam = -10.0;
 GLfloat xref = 0.0, yref = 0.0, zref = 0.0;
 GLfloat Vx = 0.0, Vy = 1.0, Vz = 0.0;
 GLfloat fov = 30.0, aspect = winWidth / winHeight, zNear = 25.0, zFar = 1000.0;
@@ -59,8 +59,6 @@ void Init()
     glEnable(GL_LIGHT0);
     glEnable(GL_COLOR_MATERIAL);
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_AUTO_NORMAL);
-    glEnable(GL_NORMALIZE);
 
     // Init textures
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
@@ -255,12 +253,14 @@ void simpleNURBS(float width, float height, float curvature)
     gluNurbsProperty(theNurb, GLU_SAMPLING_TOLERANCE, 25.0);
     gluNurbsProperty(theNurb, GLU_DISPLAY_MODE, GLU_FILL);
 
+    glEnable(GL_AUTO_NORMAL);
     gluBeginSurface(theNurb);
     gluNurbsSurface(theNurb,
                     8, knots, 8, knots,
                     4 * 3, 3, &ctlpoints[0][0][0],
                     4, 4, GL_MAP2_VERTEX_3);
     gluEndSurface(theNurb);
+    glDisable(GL_AUTO_NORMAL);
 }
 
 void displayTable(float posx, float posz, float height, float sizex, float sizez, float thickness)
@@ -355,13 +355,14 @@ void displayFridge(float posx, float posz, float width, float height, float dept
 
 GLfloat robotx = 0.0, robotz = 0.0, robot_y_rotate = 0.0;
 GLfloat head_x_rotate = 0.0, head_y_rotate = 0.0;
-GLfloat shoulder_x_rotate = 0.0, shoulder_z_rotate = 0.0;
-GLfloat elbow_x_rotate = 0.0, hand_y_rotate = 0.0;
+GLfloat shoulder_x_rotate = 90.0, shoulder_y_rotate = -10.0;
+GLfloat elbow_x_rotate = -20.0, hand_y_rotate = 0.0;
 
 void displayRobot()
 {
     GLfloat body_width = 6.0, body_height = 10.0, body_depth = 3.0;
-    GLfloat neck_length = 1.0;
+    GLfloat neck_length = 1.0, arm_length = 3.0;
+    GLfloat arm_pos[3] = {0.0, body_height * (float) 0.8, body_depth * (float) 0.5};
 
     glColor3f(0.5, 0.0, 0.0);
     
@@ -400,16 +401,22 @@ void displayRobot()
     // TODO: Draw right wheel
     glPopMatrix();
 
-    glPushMatrix();
+    glColor3f(0.9, 0.0, 0.0);
+    glPushMatrix(); //arm
+    glTranslatef(arm_pos[0], arm_pos[1], arm_pos[2]);
+    gluSphere(gluNewQuadric(), 0.8, 10, 10);
     glRotatef(shoulder_x_rotate, 1.0, 0.0, 0.0);
-    glRotatef(shoulder_z_rotate, 0.0, 0.0, 1.0);
-    // TODO: Draw shoulder
-    // TODO: Draw upper arm
-    // TODO: Draw elbow
+    glRotatef(shoulder_y_rotate, 0.0, 1.0, 0.0);
+    glPushMatrix(); // upper arm
+    gluCylinder(gluNewQuadric(), 0.8, 0.8, arm_length, 10.0, 10.0);
+    glTranslatef(0.0, 0.0, arm_length);
+    gluSphere(gluNewQuadric(), 0.8, 10, 10);
 
-    glPushMatrix();
+    glPushMatrix(); // lower arm
     glRotatef(elbow_x_rotate, 1.0, 0.0, 0.0);
-    // TODO: Draw lower arm
+    gluCylinder(gluNewQuadric(), 0.8, 0.6, arm_length, 10.0, 10.0);
+    glTranslatef(0.0, 0.0, arm_length);
+    gluSphere(gluNewQuadric(), 0.6, 10, 10);
 
     glPushMatrix();
     glRotatef(hand_y_rotate, 0.0, 1.0, 0.0);
@@ -418,6 +425,7 @@ void displayRobot()
     glPopMatrix(); // hand
     glPopMatrix(); // lower arm
     glPopMatrix(); // upper arm
+    glPopMatrix(); // arm
     glPopMatrix(); // body
 }
 
