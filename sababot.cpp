@@ -9,7 +9,7 @@
 GLuint textures[2];
 
 GLint winWidth = 1200, winHeight = 800;
-GLfloat xcam = -10.0, ycam = 40.0, zcam = -10.0;
+GLfloat xcam = 50.0, ycam = 40.0, zcam = 50.0;
 GLfloat xref = 0.0, yref = 0.0, zref = 0.0;
 GLfloat Vx = 0.0, Vy = 1.0, Vz = 0.0;
 GLfloat fov = 30.0, aspect = winWidth / winHeight, zNear = 25.0, zFar = 1000.0;
@@ -21,7 +21,7 @@ enum states
     MOV_LIGHT
 };
 
-int mvstate = MOV_CAM;
+int mvstate = MOV_ROBOT;
 int first_person = false;
 
 void InitGlut(int argc, char **argv)
@@ -658,7 +658,7 @@ void drawHand()
     glDisable(GL_NORMALIZE);
 }
 
-GLfloat robotx = 0.0, robotz = 0.0, robot_y_rotate = -30.0;
+GLfloat robotx = 0.0, robotz = 0.0, robot_y_rotate = 0.0;
 GLfloat head_x_rotate = 0.0, head_y_rotate = 0.0;
 GLfloat shoulder_x_rotate = 90.0, shoulder_y_rotate = -10.0;
 GLfloat elbow_x_rotate = -20.0, hand_y_rotate = 0.0;
@@ -766,6 +766,69 @@ void Keyboard(unsigned char key, int x, int y)
     switch (mvstate)
     {
     case MOV_ROBOT:
+        switch (key)
+        {
+        case 'd': // MOVE HEAD RIGHT
+            if(head_y_rotate > -60.0)
+                head_y_rotate -= 1;
+            break;
+
+        case 'a': // MOVE HEAD LEFT
+            if(head_y_rotate < 60.0)
+                head_y_rotate += 1;
+            break;
+
+        case 'w': // MOVE HEAD UP
+            if(head_x_rotate > -10.0)
+                head_x_rotate -= 1;
+            break;
+
+        case 's': // MOVE HEAD DOWN
+            if(head_x_rotate < 17.0)
+                head_x_rotate += 1;
+            break;
+        
+        case 'h': // MOVE ARM RIGHT
+            if(shoulder_y_rotate > -120.0)
+                shoulder_y_rotate -= 1;
+            break;
+
+        case 'f': // MOVE ARM LEFT
+            if(shoulder_y_rotate < -10.0)
+                shoulder_y_rotate += 1;
+            break;
+
+        case 't': // MOVE ARM UP
+            if(shoulder_x_rotate > 0.0)
+                shoulder_x_rotate -= 1;
+            break;
+
+        case 'g': // MOVE ARM DOWN
+            if(shoulder_x_rotate < 90.0)
+                shoulder_x_rotate += 1;
+            break;
+
+        case 'j': // CLOSE ELBOW
+            if(elbow_x_rotate > -160.0)
+                elbow_x_rotate -= 1;
+            break;
+
+        case 'u': // OPEN ELBOW
+            if(elbow_x_rotate < 0.0)
+                elbow_x_rotate += 1;
+            break;
+
+        case 'i': // ROTATE HAND INWARDS
+            /* code */
+            break;
+
+        case 'k': // ROTATE HAND OUTWARDS
+            /* code */
+            break;
+
+        default:
+            break;
+        }
         break;
     case MOV_CAM:
         switch (key)
@@ -784,56 +847,61 @@ void Keyboard(unsigned char key, int x, int y)
 
 void SpecialKeyboard(int key, int x, int y)
 {
-    if (key == GLUT_KEY_F3)
+    switch (key)
     {
+    case GLUT_KEY_F1: // SHOW/HIDE HELP
+        /* code */
+        break;
+
+    case GLUT_KEY_F2: // MOVE ROBOT STATE
+        mvstate = MOV_ROBOT;
+        break;
+
+    case GLUT_KEY_F3: // TOGGLE FIRST PERSON VIEW
         first_person = !first_person;
-        if (first_person)
+        if(first_person)
             mvstate = MOV_ROBOT;
-        // TODO: change view
-    }
-    else
-    {
+        break;
+
+    case GLUT_KEY_F4: // MOVE CAMERA
+        mvstate = MOV_CAM;
+        break;
+
+    case GLUT_KEY_F5: // MOVE LIGHT SOURCE
+        mvstate = MOV_LIGHT;
+        break;
+    
+    default:
         switch (mvstate)
         {
         case MOV_ROBOT:
-            break;
-        case MOV_CAM:
             switch (key)
             {
-            case GLUT_KEY_UP: // get closer
-                ycam -= 1;
-                glMatrixMode(GL_MODELVIEW);
-                glLoadIdentity();
-                gluLookAt(xcam, ycam, zcam, xref, yref, zref, Vx, Vy, Vz);
+            case GLUT_KEY_UP: // MOVE ROBOT FORWARD
+                robotz += 1;
                 break;
 
-            case GLUT_KEY_DOWN: // move away
-                ycam += 1;
-                glMatrixMode(GL_MODELVIEW);
-                glLoadIdentity();
-                gluLookAt(xcam, ycam, zcam, xref, yref, zref, Vx, Vy, Vz);
+            case GLUT_KEY_DOWN: // MOVE ROBOT BACKWARD
+                robotz -= 1;
                 break;
 
-            case GLUT_KEY_RIGHT: // rotate right
-                xcam -= 1;
-                zcam += 1;
-                glMatrixMode(GL_MODELVIEW);
-                glLoadIdentity();
-                gluLookAt(xcam, ycam, zcam, xref, yref, zref, Vx, Vy, Vz);
+            case GLUT_KEY_RIGHT: // TURN RIGHT
+                robot_y_rotate -= 1;
                 break;
 
-            case GLUT_KEY_LEFT: // rotate left
-                xcam += 1;
-                zcam -= 1;
-                glMatrixMode(GL_MODELVIEW);
-                glLoadIdentity();
-                gluLookAt(xcam, ycam, zcam, xref, yref, zref, Vx, Vy, Vz);
+            case GLUT_KEY_LEFT: // TURN LEFT
+                robot_y_rotate += 1;
+                break;
+            
+            default:
                 break;
             }
             break;
-        case MOV_LIGHT:
+        
+        default:
             break;
         }
+        break;
     }
     glutPostRedisplay();
 }
