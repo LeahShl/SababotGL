@@ -672,8 +672,10 @@ void displayRobot()
     glColor3f(0.6, 0.7, 1.0);
 
     glPushMatrix();
-    glTranslatef(robotx, body_depth * 0.5, robotz);
+    glTranslatef(body_width * 0.5, 0.0, body_depth * 0.5);
     glRotatef(robot_y_rotate, 0.0, 1.0, 0.0);
+    glTranslatef(-body_width * 0.5, 0.0, -body_depth * 0.5);
+    glTranslatef(0.0, body_depth * 0.5, 0.0);
 
     /* BODY */
     glPushMatrix();
@@ -685,14 +687,16 @@ void displayRobot()
     glPushMatrix();
     glTranslatef(body_width / 2.0, body_height, body_depth / 2.0);
     glRotatef(-90.0, 1.0, 0.0, 0.0);
-    gluCylinder(gluNewQuadric(), 1.0, 1.0, neck_length * 3.0, 10.0, 10.0);
+    gluCylinder(gluNewQuadric(), 0.9, 0.9, neck_length * 1.5, 10.0, 10.0);
     glPopMatrix();
 
     /* HEAD */
     glPushMatrix();
     glTranslatef((body_width * 0.25) / 2.0, body_height + neck_length, 0.0);
+    glTranslatef(body_width * 0.5, 0.0, body_depth * 0.5);
     glRotatef(head_x_rotate, 1.0, 0.0, 0.0);
     glRotatef(head_y_rotate, 0.0, 1.0, 0.0);
+    glTranslatef(-body_width * 0.5, 0.0, -body_depth * 0.5);
     rectCuboid(body_width * 0.75, body_height * 0.5, body_depth);
     glPopMatrix();
 
@@ -709,19 +713,19 @@ void displayRobot()
 
     glPushMatrix(); // arm
     glTranslatef(arm_pos[0], arm_pos[1], arm_pos[2]);
-    gluSphere(gluNewQuadric(), 0.8, 10, 10);
+    gluSphere(gluNewQuadric(), 0.7, 10, 10);
     glRotatef(shoulder_x_rotate, 1.0, 0.0, 0.0);
     glRotatef(shoulder_y_rotate, 0.0, 1.0, 0.0);
     glPushMatrix(); // upper arm
-    gluCylinder(gluNewQuadric(), 0.8, 0.8, arm_length, 10.0, 10.0);
+    gluCylinder(gluNewQuadric(), 0.7, 0.7, arm_length, 10.0, 10.0);
     glTranslatef(0.0, 0.0, arm_length);
-    gluSphere(gluNewQuadric(), 0.8, 10, 10);
+    gluSphere(gluNewQuadric(), 0.7, 10, 10);
 
     glPushMatrix(); // lower arm
     glRotatef(elbow_x_rotate, 1.0, 0.0, 0.0);
-    gluCylinder(gluNewQuadric(), 0.8, 0.6, arm_length, 10.0, 10.0);
+    gluCylinder(gluNewQuadric(), 0.7, 0.5, arm_length, 10.0, 10.0);
     glTranslatef(0.0, 0.0, arm_length);
-    gluSphere(gluNewQuadric(), 0.6, 10, 10);
+    gluSphere(gluNewQuadric(), 0.5, 10, 10);
 
     glPushMatrix();
     glRotatef(hand_y_rotate, 0.0, 0.0, 1.0);
