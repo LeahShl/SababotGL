@@ -9,7 +9,7 @@
 GLuint textures[2];
 
 GLint winWidth = 1200, winHeight = 800;
-GLfloat xcam = 50.0, ycam = 40.0, zcam = 50.0;
+GLfloat cam_dist = 50.0, world_rot = 0.0;
 GLfloat xref = 0.0, yref = 0.0, zref = 0.0;
 GLfloat Vx = 0.0, Vy = 1.0, Vz = 0.0;
 GLfloat fov = 30.0, aspect = winWidth / winHeight, zNear = 25.0, zFar = 1000.0;
@@ -38,8 +38,6 @@ void Init()
     glShadeModel(GL_SMOOTH);
 
     // Init camera
-    glMatrixMode(GL_MODELVIEW);
-    gluLookAt(xcam, ycam, zcam, xref, yref, zref, Vx, Vy, Vz);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     gluPerspective(fov, aspect, zNear, zFar);
@@ -742,6 +740,9 @@ void Display()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    gluLookAt(cam_dist, cam_dist, cam_dist, xref, yref, zref, Vx, Vy, Vz);
+    glRotatef(world_rot, 0.0, 1.0, 0.0);
     displayFloor(100.0);
     displayTable(-10.0, 30.0, 10.0, 20.0, 10.0, 1.0);
     displayChair(-2.0, 20.0, 6.0, 6.0, 5.0, 1.0);
@@ -902,6 +903,31 @@ void SpecialKeyboard(int key, int x, int y)
             }
             break;
         
+        case MOV_CAM:
+            switch (key)
+            {
+            case GLUT_KEY_UP: // MOVE CAMERA CLOSER
+                if(cam_dist > 0.0)
+                    cam_dist -= 1;
+                break;
+
+            case GLUT_KEY_DOWN: // MOVE CAMERA AWAY
+                if(cam_dist < 120.0)
+                    cam_dist += 1;
+                break;
+
+            case GLUT_KEY_RIGHT: // ROTATE CAMERA RIGHT
+                world_rot -= 1;
+                break;
+
+            case GLUT_KEY_LEFT: // ROTATE CAMERA LEFT
+                world_rot += 1;
+                break;
+            
+            default:
+                break;
+            }
+
         default:
             break;
         }

@@ -5,3 +5,6 @@
 /test-robot-arm.cpp
 /test-texture
 /test-texture.cpp
+math3d.cpp
+math3d.h
+.~lock.mmn17.odt#
