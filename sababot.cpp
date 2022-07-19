@@ -819,11 +819,11 @@ void Keyboard(unsigned char key, int x, int y)
             break;
 
         case 'i': // ROTATE HAND INWARDS
-            /* code */
+            hand_y_rotate += 1;
             break;
 
         case 'k': // ROTATE HAND OUTWARDS
-            /* code */
+            hand_y_rotate -= 1;
             break;
 
         default:
