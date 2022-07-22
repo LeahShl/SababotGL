@@ -13,6 +13,7 @@ GLfloat cam_dist = 50.0, world_rot = 0.0;
 GLfloat xref = 0.0, yref = 0.0, zref = 0.0;
 GLfloat Vx = 0.0, Vy = 1.0, Vz = 0.0;
 GLfloat fov = 30.0, aspect = winWidth / winHeight, zNear = 25.0, zFar = 1000.0;
+GLfloat light_power = 0.5;
 
 enum states
 {
@@ -23,6 +24,7 @@ enum states
 
 int mvstate = MOV_ROBOT;
 int first_person = false;
+int adjust_ambient = false;
 
 void InitGlut(int argc, char **argv)
 {
@@ -44,9 +46,9 @@ void Init()
     glMatrixMode(GL_MODELVIEW);
 
     // Init illumination
-    GLfloat light_position[] = {60.0, 60.0, 60.0, 0.0};
+    GLfloat light_position[] = {-60.0, 60.0, 60.0, 0.0};
     GLfloat white_light[] = {1.0, 1.0, 1.0, 1.0};
-    GLfloat lmodel_ambient[] = {0.5, 0.5, 0.5, 1.0};
+    GLfloat lmodel_ambient[] = {light_power, light_power, light_power, 1.0};
     glLightfv(GL_LIGHT0, GL_POSITION, light_position);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, white_light);
     glLightfv(GL_LIGHT0, GL_SPECULAR, white_light);
@@ -57,6 +59,7 @@ void Init()
     glEnable(GL_LIGHT0);
     glEnable(GL_COLOR_MATERIAL);
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_MULTISAMPLE);
 
     // Init textures
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
@@ -673,7 +676,7 @@ void displayRobot()
     glTranslatef(body_width * 0.5, 0.0, body_depth * 0.5);
     glRotatef(robot_y_rotate, 0.0, 1.0, 0.0);
     glTranslatef(-body_width * 0.5, 0.0, -body_depth * 0.5);
-    glTranslatef(0.0, body_depth * 0.5, 0.0);
+    glTranslatef(0.0, body_depth * 0.5, robotz);
 
     /* BODY */
     glPushMatrix();
@@ -736,6 +739,37 @@ void displayRobot()
     glPopMatrix(); // body
 }
 
+void DisplayAdjustAmbient()
+{
+    GLfloat box_w = 400.0, box_h = 200.0,
+            box_x = winWidth * 0.5 - box_w * 0.5,
+            box_y = winHeight * 0.5 - box_h * 0.5;
+
+    glDisable(GL_DEPTH_TEST);
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    gluOrtho2D(0.0, winWidth, 0.0, winHeight);
+
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+
+    glColor4f(0.0, 0.0, 0.0, 0.5);
+    glBegin(GL_QUADS);
+    glVertex2f(box_x, box_y);
+    glVertex2f(box_x, box_h);
+    glVertex2f(box_w, box_h);
+    glVertex2f(box_w, box_h);
+    glEnd();
+
+    glPopMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glEnable(GL_DEPTH_TEST);
+    glMatrixMode(GL_MODELVIEW);
+}
+
 void Display()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -749,6 +783,9 @@ void Display()
     displayFridge(-20.0, -50.0, 8.0, 24.0, 6.0);
     displayRobot();
     displayDebug();
+
+    if(adjust_ambient)
+        DisplayAdjustAmbient();
     glutSwapBuffers();
 }
 
@@ -757,10 +794,10 @@ void Reshape(GLsizei w, GLsizei h)
     winWidth = w;
     winHeight = h;
     aspect = w / h;
+    glViewport(0, 0, winWidth, winHeight);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     gluPerspective(fov, aspect, zNear, zFar);
-    glViewport(0, 0, winWidth, winHeight);
     glMatrixMode(GL_MODELVIEW);
     glutSwapBuffers();
     glutPostRedisplay();
@@ -941,7 +978,8 @@ void Menu(int value)
     switch (value)
     {
     case 0:
-        /* code */
+        adjust_ambient = true;
+        glutPostRedisplay();
         break;
 
     case 1:
