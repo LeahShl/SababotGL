@@ -92,6 +92,8 @@ void Init()
     }
 
     stbi_image_free(image);
+
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 /* Helper function so I could see what I'm doing.
@@ -739,35 +741,51 @@ void displayRobot()
     glPopMatrix(); // body
 }
 
+void displayString(float x, float y, void *font, const char *string)
+{
+    glDisable(GL_LIGHTING);
+    const char *c;
+    glRasterPos2f(x, y);
+    for (c=string; *c != '\0'; c++) {
+        glutBitmapCharacter(font, *c);
+    }
+    glEnable(GL_LIGHTING);
+}
+
 void DisplayAdjustAmbient()
 {
-    GLfloat box_w = 400.0, box_h = 200.0,
-            box_x = winWidth * 0.5 - box_w * 0.5,
-            box_y = winHeight * 0.5 - box_h * 0.5;
+    GLfloat box_w = 400.0 / winWidth, box_h = 200.0 / winHeight,
+            box_x = 0.5 - box_w * 0.5,
+            box_y = 0.5 - box_w * 0.5;
+
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    gluOrtho2D(0.0, 1.0, 0.0, 1.0);
+
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
 
     glDisable(GL_DEPTH_TEST);
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    gluOrtho2D(0.0, winWidth, 0.0, winHeight);
-
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-
-    glColor4f(0.0, 0.0, 0.0, 0.5);
+    glEnable(GL_BLEND);
+    glColor4f(0.0, 0.0, 0.0, 0.7);
     glBegin(GL_QUADS);
     glVertex2f(box_x, box_y);
-    glVertex2f(box_x, box_h);
-    glVertex2f(box_w, box_h);
-    glVertex2f(box_w, box_h);
+    glVertex2f(box_x + box_w, box_y);
+    glVertex2f(box_x + box_w, box_y + box_h);
+    glVertex2f(box_x, box_y + box_h);
     glEnd();
+    glDisable(GL_BLEND);
 
-    glPopMatrix();
+    glColor3f(1.0, 1.0, 1.0);
+    displayString(box_x + (30.0 / winWidth), box_y + box_h - (30.0 / winHeight), GLUT_BITMAP_HELVETICA_18, "Adjust ambient light");
+    glEnable(GL_DEPTH_TEST);
+
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
-    glEnable(GL_DEPTH_TEST);
     glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
 }
 
 void Display()
