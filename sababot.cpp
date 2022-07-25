@@ -1,7 +1,7 @@
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <GL/glut.h>
-#include "matrix.h"
+//#include "matrix.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -18,6 +18,8 @@ GLfloat light_power = 0.5;
 GLfloat light_x = -60.0, light_y = 60.0, light_z = 60.0;
 GLfloat light_position[] = {light_x, light_y, light_z, 0.0};
 GLfloat lmodel_ambient[] = {light_power, light_power, light_power, 1.0};
+
+float robot_body_mat[16], robot_head_mat[16];
 
 enum states
 {
@@ -133,7 +135,6 @@ void displayFloor(float size)
     glMaterialfv(GL_FRONT, GL_SPECULAR, specref);
     glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
     glMateriali(GL_FRONT, GL_SHININESS, 128);
-
     glPushMatrix();
     glTranslatef(-size / 2, 0.0, -size / 2);
     glColor3f(1.0, 1.0, 1.0);
@@ -682,10 +683,17 @@ void displayRobot()
     glColor3f(0.6, 0.7, 1.0);
 
     glPushMatrix();
+
+    // save matrix for first-person view
+    glPushMatrix();
+    glLoadIdentity();
     glTranslatef(body_width * 0.5, 0.0, body_depth * 0.5);
     glRotatef(robot_y_rotate, 0.0, 1.0, 0.0);
     glTranslatef(-body_width * 0.5, 0.0, -body_depth * 0.5);
     glTranslatef(0.0, body_depth * 0.5, robotz);
+    glGetFloatv(GL_MODELVIEW_MATRIX, robot_body_mat);
+    glPopMatrix();
+    glMultMatrixf(robot_body_mat); // apply saved matrix
 
     /* BODY */
     glPushMatrix();
@@ -701,11 +709,18 @@ void displayRobot()
 
     /* HEAD */
     glPushMatrix();
+
+    // save matrix for first-person view
+    glPushMatrix();
+    glLoadIdentity();
     glTranslatef(body_width * 0.625, body_height + neck_length, body_depth * 0.5);
     glRotatef(head_x_rotate, 1.0, 0.0, 0.0);
     glRotatef(head_y_rotate, 0.0, 1.0, 0.0);
     glTranslatef(-body_width * 0.5, 0.0, -body_depth * 0.5);
-    //glGetFloatv(GL_MODELVIEW, robot_head_mat); // save matrix for first-person view
+    glGetFloatv(GL_MODELVIEW_MATRIX, robot_head_mat); 
+    glPopMatrix();
+
+    glMultMatrixf(robot_head_mat); // apply saved matrix
     rectCuboid(body_width * 0.75, body_height * 0.5, body_depth);
     glPopMatrix();
 
@@ -831,12 +846,14 @@ void Display()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
+
     if(first_person)
     {
-        glPushMatrix();
-        //glLoadMatrixf(robot_head_mat);
-        gluLookAt(cam_dist, cam_dist, cam_dist, xref, yref, zref, Vx, Vy, Vz);
-        glPopMatrix();
+        glLoadMatrixf(robot_head_mat);
+        glMultMatrixf(robot_body_mat);
+        gluLookAt(0.0, 1.0, 0.0,
+                  0.0, 1.0, 1.0,
+                  Vx, Vy, Vz);
     }
     else
     {
