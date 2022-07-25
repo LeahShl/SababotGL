@@ -12,8 +12,16 @@ GLint winWidth = 1200, winHeight = 800;
 GLfloat cam_dist = 50.0, world_rot = 0.0;
 GLfloat xref = 0.0, yref = 0.0, zref = 0.0;
 GLfloat Vx = 0.0, Vy = 1.0, Vz = 0.0;
-GLfloat fov = 30.0, aspect = winWidth / winHeight, zNear = 25.0, zFar = 1000.0;
+GLfloat fov = 30.0, aspect = winWidth / winHeight, zNear = 1.0, zFar = 500.0;
 GLfloat light_power = 0.5;
+GLfloat light_x = -60.0, light_y = 60.0, light_z = 60.0;
+GLfloat light_position[] = {light_x, light_y, light_z, 0.0};
+GLfloat lmodel_ambient[] = {light_power, light_power, light_power, 1.0};
+
+GLfloat robot_head_mat[16] = {1.0, 0.0, 0.0, 0.0,
+                              0.0, 1.0, 0.0, 0.0,
+                              0.0, 0.0, 1.0, 0.0,
+                              0.0, 0.0, 0.0, 1.0};
 
 enum states
 {
@@ -34,34 +42,21 @@ void InitGlut(int argc, char **argv)
     glutCreateWindow("SababotGL");
 }
 
-void Init()
+void initLight()
 {
-    glClearColor(0.0, 0.0, 0.0, 0.0);
-    glShadeModel(GL_SMOOTH);
-
-    // Init camera
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(fov, aspect, zNear, zFar);
-    glMatrixMode(GL_MODELVIEW);
-
-    // Init illumination
-    GLfloat light_position[] = {-60.0, 60.0, 60.0, 0.0};
     GLfloat white_light[] = {1.0, 1.0, 1.0, 1.0};
-    GLfloat lmodel_ambient[] = {light_power, light_power, light_power, 1.0};
     glLightfv(GL_LIGHT0, GL_POSITION, light_position);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, white_light);
     glLightfv(GL_LIGHT0, GL_SPECULAR, white_light);
     glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
     glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
-
+    glEnable(GL_COLOR_MATERIAL);
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
-    glEnable(GL_COLOR_MATERIAL);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_MULTISAMPLE);
+}
 
-    // Init textures
+void initTextures()
+{
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     glGenTextures(2, textures);
     glBindTexture(GL_TEXTURE_2D, textures[TEXTURE_MARBLE]);
@@ -92,8 +87,24 @@ void Init()
     }
 
     stbi_image_free(image);
+}
 
+void Init()
+{
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+    glShadeModel(GL_SMOOTH);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_MULTISAMPLE);
+
+    // Init camera
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(fov, aspect, zNear, zFar);
+    glMatrixMode(GL_MODELVIEW);
+
+    initLight();
+    initTextures();
 }
 
 /* Helper function so I could see what I'm doing.
@@ -665,10 +676,10 @@ GLfloat robotx = 0.0, robotz = 0.0, robot_y_rotate = 0.0;
 GLfloat head_x_rotate = 0.0, head_y_rotate = 0.0;
 GLfloat shoulder_x_rotate = 90.0, shoulder_y_rotate = -10.0;
 GLfloat elbow_x_rotate = -20.0, hand_y_rotate = 0.0;
+GLfloat body_width = 6.0, body_height = 10.0, body_depth = 3.0;
 
 void displayRobot()
 {
-    GLfloat body_width = 6.0, body_height = 10.0, body_depth = 3.0;
     GLfloat neck_length = 1.0, arm_length = 3.0;
     GLfloat arm_pos[3] = {0.0, body_height * (float)0.8, body_depth * (float)0.5};
 
@@ -682,7 +693,6 @@ void displayRobot()
 
     /* BODY */
     glPushMatrix();
-    // TODO: Shear
     rectCuboid(body_width, body_height, body_depth);
     glPopMatrix();
 
@@ -695,11 +705,11 @@ void displayRobot()
 
     /* HEAD */
     glPushMatrix();
-    glTranslatef((body_width * 0.25) / 2.0, body_height + neck_length, 0.0);
-    glTranslatef(body_width * 0.5, 0.0, body_depth * 0.5);
+    glTranslatef(body_width * 0.625, body_height + neck_length, body_depth * 0.5);
     glRotatef(head_x_rotate, 1.0, 0.0, 0.0);
     glRotatef(head_y_rotate, 0.0, 1.0, 0.0);
     glTranslatef(-body_width * 0.5, 0.0, -body_depth * 0.5);
+    //glGetFloatv(GL_MODELVIEW, robot_head_mat); // save matrix for first-person view
     rectCuboid(body_width * 0.75, body_height * 0.5, body_depth);
     glPopMatrix();
 
@@ -752,7 +762,7 @@ void displayString(float x, float y, void *font, const char *string)
     glEnable(GL_LIGHTING);
 }
 
-void DisplayAdjustAmbient()
+void displayAdjustAmbient()
 {
     GLfloat box_w = 400.0 / winWidth, box_h = 200.0 / winHeight,
             box_x = 0.5 - box_w * 0.5,
@@ -788,22 +798,66 @@ void DisplayAdjustAmbient()
     glPopMatrix();
 }
 
+void displayMovingMode()
+{
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    gluOrtho2D(0.0, 1.0, 1.0, 0.0);
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    glDisable(GL_DEPTH_TEST);
+    glColor3f(0.0, 1.0, 0.0);
+    switch (mvstate)
+    {
+    case MOV_ROBOT:
+        displayString(5.0 / winWidth, 25.0 / winHeight, GLUT_BITMAP_TIMES_ROMAN_24, "Robot Mode");
+        break;
+    
+    case MOV_CAM:
+        displayString(5.0 / winWidth, 25.0 / winHeight, GLUT_BITMAP_TIMES_ROMAN_24, "Camera Mode");
+        break;
+
+    case MOV_LIGHT:
+        displayString(5.0 / winWidth, 25.0 / winHeight, GLUT_BITMAP_TIMES_ROMAN_24, "Light Mode");
+        break;
+    }
+    glEnable(GL_DEPTH_TEST);
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
 void Display()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    gluLookAt(cam_dist, cam_dist, cam_dist, xref, yref, zref, Vx, Vy, Vz);
-    glRotatef(world_rot, 0.0, 1.0, 0.0);
+    if(first_person)
+    {
+        glPushMatrix();
+        //glLoadMatrixf(robot_head_mat);
+        gluLookAt(cam_dist, cam_dist, cam_dist, xref, yref, zref, Vx, Vy, Vz);
+        glPopMatrix();
+    }
+    else
+    {
+        gluLookAt(cam_dist, cam_dist, cam_dist, xref, yref, zref, Vx, Vy, Vz);
+        glRotatef(world_rot, 0.0, 1.0, 0.0);
+    }
+    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
     displayFloor(100.0);
     displayTable(-10.0, 30.0, 10.0, 20.0, 10.0, 1.0);
     displayChair(-2.0, 20.0, 6.0, 6.0, 5.0, 1.0);
     displayFridge(-20.0, -50.0, 8.0, 24.0, 6.0);
     displayRobot();
     displayDebug();
+    displayMovingMode();
 
     if(adjust_ambient)
-        DisplayAdjustAmbient();
+        displayAdjustAmbient();
     glutSwapBuffers();
 }
 
@@ -899,6 +953,18 @@ void Keyboard(unsigned char key, int x, int y)
         }
         break;
     case MOV_LIGHT:
+        switch (key)
+        {
+        case 'w':
+            if(light_power < 1.0)
+                light_power += 0.05;
+            break;
+
+        case 's':
+            if(light_power > 0.0)
+                light_power -= 0.05;
+            break;
+        }
         break;
     }
 
@@ -921,6 +987,7 @@ void SpecialKeyboard(int key, int x, int y)
         first_person = !first_person;
         if(first_person)
             mvstate = MOV_ROBOT;
+            glutPostRedisplay();
         break;
 
     case GLUT_KEY_F4: // MOVE CAMERA
@@ -983,8 +1050,35 @@ void SpecialKeyboard(int key, int x, int y)
                 break;
             }
 
-        default:
-            break;
+        case(MOV_LIGHT):
+            switch (key)
+            {
+            case GLUT_KEY_UP: // MOVE LIGHT SOURCE UP
+                
+                break;
+
+            case GLUT_KEY_DOWN: // MOVE LIGHT SOURCE DOWN
+                
+                break;
+
+            case GLUT_KEY_RIGHT: // MOVE LIGHT SOURCE TOWARDS X+
+                
+                break;
+
+            case GLUT_KEY_LEFT: // MOVE LIGHT SOURCE TOWARDS X-
+                
+                break;
+
+            case GLUT_KEY_END: // MOVE LIGHT SOURCE TOWARDS Z+
+
+                break;
+
+            case GLUT_KEY_HOME: // MOVE LIGHT SOURCE TOWARDS Z-
+
+                break;
+            
+            glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+            }
         }
         break;
     }
