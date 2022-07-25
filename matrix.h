@@ -1,6 +1,5 @@
-#include <iostream>
 #include <math.h>
-#include<array>
+#include <array>
 using namespace std;
 
 #define X_AXIS 0
@@ -69,17 +68,7 @@ mat4X4 matMult(mat4X4 matleft, mat4X4 matright)
                 temp += matleft[4*i+k] * matright[j+4*k];
             }
             result[4*i+j] = temp;
-            cout<<result[4*i+j]<<" ";
         }
     }
     return result;
-}
-
-int main(int argc, char **argv)
-{
-    mat4X4 trans, rot, mult;
-    trans = loadTranslation(1.0, 2.0, 3.0); 
-    rot = loadRotation(45.0, Z_AXIS);
-    mult = matMult(trans, rot);
-    return 0;
 }

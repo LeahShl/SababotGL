@@ -1,6 +1,7 @@
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <GL/glut.h>
+#include "matrix.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -17,11 +18,6 @@ GLfloat light_power = 0.5;
 GLfloat light_x = -60.0, light_y = 60.0, light_z = 60.0;
 GLfloat light_position[] = {light_x, light_y, light_z, 0.0};
 GLfloat lmodel_ambient[] = {light_power, light_power, light_power, 1.0};
-
-GLfloat robot_head_mat[16] = {1.0, 0.0, 0.0, 0.0,
-                              0.0, 1.0, 0.0, 0.0,
-                              0.0, 0.0, 1.0, 0.0,
-                              0.0, 0.0, 0.0, 1.0};
 
 enum states
 {
