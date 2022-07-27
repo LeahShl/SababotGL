@@ -1,7 +1,6 @@
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <GL/glut.h>
-//#include "matrix.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -13,11 +12,21 @@ GLint winWidth = 1200, winHeight = 800;
 GLfloat cam_dist = 50.0, world_rot = 0.0;
 GLfloat xref = 0.0, yref = 0.0, zref = 0.0;
 GLfloat Vx = 0.0, Vy = 1.0, Vz = 0.0;
+
+GLfloat robotx = 0.0, robotz = 1.0, robot_scalar = 1.0, robot_y_rotate = 0.0;
+GLfloat head_x_rotate = 0.0, head_y_rotate = 0.0;
+GLfloat shoulder_x_rotate = 90.0, shoulder_y_rotate = -10.0;
+GLfloat elbow_x_rotate = -20.0, hand_y_rotate = 0.0;
+
+GLfloat body_width = 6.0, body_height = 10.0, body_depth = 3.0, neck_length = 1.0;
+GLfloat fpx0 = body_width * 0.5, fpy0 = body_height + neck_length, fpz0 = body_depth + 0.9,
+        fpxref = 0.0, fpyref = body_height + neck_length, fpzref = 100.0,
+        fpVx = 0.0, fpVy = 1.0, fpVz = 0.0;
+
 GLfloat fov = 30.0, aspect = winWidth / winHeight, zNear = 1.0, zFar = 500.0;
 GLfloat light_power = 0.5;
 GLfloat light_x = -60.0, light_y = 60.0, light_z = 60.0;
-GLfloat light_position[] = {light_x, light_y, light_z, 0.0};
-GLfloat lmodel_ambient[] = {light_power, light_power, light_power, 1.0};
+GLfloat light_xref = 0.0, light_yref = 0.0, light_zref = 0.0;
 
 float robot_body_mat[16], robot_head_mat[16];
 
@@ -43,7 +52,11 @@ void InitGlut(int argc, char **argv)
 void initLight()
 {
     GLfloat white_light[] = {1.0, 1.0, 1.0, 1.0};
+    GLfloat light_position[] = {light_x, light_y, light_z, 0.0};
+    GLfloat light_direction[] = {light_xref, light_yref, light_zref};
+    GLfloat lmodel_ambient[] = {light_power, light_power, light_power, 1.0};
     glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+    glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, light_direction);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, white_light);
     glLightfv(GL_LIGHT0, GL_SPECULAR, white_light);
     glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
@@ -357,9 +370,9 @@ void displayFridge(float posx, float posz, float width, float height, float dept
     rectCuboid(width, height, 1.0);
 
     glTranslatef(0.0, 0.0, 1.2);
-    simpleNURBS(width, door_split, 1.0);
+    //simpleNURBS(width, door_split, 1.0); // TODO: fix
     glTranslatef(0.0, door_split, 0.0);
-    simpleNURBS(width, height - door_split, 1.0);
+    //simpleNURBS(width, height - door_split, 1.0); // TODO: fix
     glPopMatrix();
 }
 
@@ -669,31 +682,17 @@ void drawHand()
     glDisable(GL_NORMALIZE);
 }
 
-GLfloat robotx = 0.0, robotz = 0.0, robot_y_rotate = 0.0;
-GLfloat head_x_rotate = 0.0, head_y_rotate = 0.0;
-GLfloat shoulder_x_rotate = 90.0, shoulder_y_rotate = -10.0;
-GLfloat elbow_x_rotate = -20.0, hand_y_rotate = 0.0;
-GLfloat body_width = 6.0, body_height = 10.0, body_depth = 3.0;
-
 void displayRobot()
 {
-    GLfloat neck_length = 1.0, arm_length = 3.0;
+    GLfloat arm_length = 3.0;
     GLfloat arm_pos[3] = {0.0, body_height * (float)0.8, body_depth * (float)0.5};
-
     glColor3f(0.6, 0.7, 1.0);
 
     glPushMatrix();
-
-    // save matrix for first-person view
-    glPushMatrix();
-    glLoadIdentity();
     glTranslatef(body_width * 0.5, 0.0, body_depth * 0.5);
     glRotatef(robot_y_rotate, 0.0, 1.0, 0.0);
     glTranslatef(-body_width * 0.5, 0.0, -body_depth * 0.5);
-    glTranslatef(0.0, body_depth * 0.5, robotz);
-    glGetFloatv(GL_MODELVIEW_MATRIX, robot_body_mat);
-    glPopMatrix();
-    glMultMatrixf(robot_body_mat); // apply saved matrix
+    glTranslatef(0.0, body_depth * 0.5, robot_scalar * robotz);
 
     /* BODY */
     glPushMatrix();
@@ -709,23 +708,15 @@ void displayRobot()
 
     /* HEAD */
     glPushMatrix();
-
-    // save matrix for first-person view
-    glPushMatrix();
-    glLoadIdentity();
     glTranslatef(body_width * 0.625, body_height + neck_length, body_depth * 0.5);
     glRotatef(head_x_rotate, 1.0, 0.0, 0.0);
     glRotatef(head_y_rotate, 0.0, 1.0, 0.0);
     glTranslatef(-body_width * 0.5, 0.0, -body_depth * 0.5);
-    glGetFloatv(GL_MODELVIEW_MATRIX, robot_head_mat); 
-    glPopMatrix();
-
-    glMultMatrixf(robot_head_mat); // apply saved matrix
     rectCuboid(body_width * 0.75, body_height * 0.5, body_depth);
     glPopMatrix();
 
     /* WHEELS */
-    glColor3f(0.3, 0.3, 0.3);
+    glColor3f(0.3, 0.3, 0.3); 
     glPushMatrix();
     glTranslatef(0.2, 0.0, body_depth * 0.5);
     glRotatef(90.0, 0.0, 1.0, 0.0);
@@ -849,18 +840,19 @@ void Display()
 
     if(first_person)
     {
-        glLoadMatrixf(robot_head_mat);
-        glMultMatrixf(robot_body_mat);
-        gluLookAt(0.0, 1.0, 0.0,
-                  0.0, 1.0, 1.0,
-                  Vx, Vy, Vz);
+        gluLookAt(fpx0, fpy0, fpz0,
+                  fpxref, fpyref, fpzref,
+                  fpVx, fpVy, fpVz);
+        glRotatef(robot_y_rotate + head_y_rotate, 0.0, -1.0, 0.0);
+        glRotatef(head_x_rotate, -1.0, 0.0, 0.0);
+        glTranslatef(0.0, 0.0, -robot_scalar * robotz);
     }
     else
     {
         gluLookAt(cam_dist, cam_dist, cam_dist, xref, yref, zref, Vx, Vy, Vz);
         glRotatef(world_rot, 0.0, 1.0, 0.0);
     }
-    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
+    initLight();
     displayFloor(100.0);
     displayTable(-10.0, 30.0, 10.0, 20.0, 10.0, 1.0);
     displayChair(-2.0, 20.0, 6.0, 6.0, 5.0, 1.0);
@@ -1018,11 +1010,11 @@ void SpecialKeyboard(int key, int x, int y)
             switch (key)
             {
             case GLUT_KEY_UP: // MOVE ROBOT FORWARD
-                robotz += 1;
+                robot_scalar += 0.5;
                 break;
 
             case GLUT_KEY_DOWN: // MOVE ROBOT BACKWARD
-                robotz -= 1;
+                robot_scalar -= 0.5;
                 break;
 
             case GLUT_KEY_RIGHT: // TURN RIGHT
@@ -1089,8 +1081,6 @@ void SpecialKeyboard(int key, int x, int y)
             case GLUT_KEY_HOME: // MOVE LIGHT SOURCE TOWARDS Z-
 
                 break;
-            
-            glLightfv(GL_LIGHT0, GL_POSITION, light_position);
             }
         }
         break;
