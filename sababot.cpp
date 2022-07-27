@@ -28,8 +28,6 @@ GLfloat light_power = 0.5;
 GLfloat light_x = -60.0, light_y = 60.0, light_z = 60.0;
 GLfloat light_xref = 0.0, light_yref = 0.0, light_zref = 0.0;
 
-float robot_body_mat[16], robot_head_mat[16];
-
 enum states
 {
     MOV_ROBOT,
@@ -960,12 +958,42 @@ void Keyboard(unsigned char key, int x, int y)
     case MOV_LIGHT:
         switch (key)
         {
-        case 'w':
+        case 'w': // MOVE LIGHT DIRECTION UP
+            if(light_yref < 180.0)
+                light_yref += 1;
+            break;
+
+        case 's': // MOVE LIGHT DIRECTION DOWN
+            if(light_yref > 0.0)
+                light_yref -= 1;
+            break;
+
+        case 'd': // MOVE LIGHT DIRECTION TOWARDS X+
+            if(light_xref < 180.0)
+                light_xref += 1;
+            break;
+
+        case 'a': // MOVE LIGHT DIRECTION TOWARDS X-
+            if(light_xref > -180.0)
+                light_xref -= 1;
+            break;
+
+        case 'e': // MOVE LIGHT DIRECTION TOWARDS Z+
+            if(light_zref < 180.0)
+                light_zref += 1;
+            break;
+
+        case 'q': // MOVE LIGHT DIRECTION TOWARDS Z-
+            if(light_zref > -180.0)
+                light_zref -= 1;
+            break;
+
+        case 'r':
             if(light_power < 1.0)
                 light_power += 0.05;
             break;
 
-        case 's':
+        case 'f':
             if(light_power > 0.0)
                 light_power -= 0.05;
             break;
@@ -1059,27 +1087,33 @@ void SpecialKeyboard(int key, int x, int y)
             switch (key)
             {
             case GLUT_KEY_UP: // MOVE LIGHT SOURCE UP
-                
+                if(light_y < 240.0)
+                    light_y += 1;
                 break;
 
             case GLUT_KEY_DOWN: // MOVE LIGHT SOURCE DOWN
-                
+                if(light_y > 0.0)
+                    light_y -= 1;
                 break;
 
             case GLUT_KEY_RIGHT: // MOVE LIGHT SOURCE TOWARDS X+
-                
+                if(light_x < 100.0)
+                    light_x += 1;
                 break;
 
             case GLUT_KEY_LEFT: // MOVE LIGHT SOURCE TOWARDS X-
-                
+                if(light_x > -100.0)
+                    light_x -= 1;
                 break;
 
             case GLUT_KEY_END: // MOVE LIGHT SOURCE TOWARDS Z+
-
+                if(light_z < 100.0)
+                    light_z += 1;
                 break;
 
             case GLUT_KEY_HOME: // MOVE LIGHT SOURCE TOWARDS Z-
-
+                if(light_z > -100.0)
+                    light_z -= 1;
                 break;
             }
         }
