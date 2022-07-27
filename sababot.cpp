@@ -26,7 +26,9 @@ GLfloat fpx0 = body_width * 0.5, fpy0 = body_height + neck_length, fpz0 = body_d
 GLfloat fov = 30.0, aspect = winWidth / winHeight, zNear = 1.0, zFar = 500.0;
 GLfloat light_power = 0.5;
 GLfloat light_x = -60.0, light_y = 60.0, light_z = 60.0;
-GLfloat light_xref = 0.0, light_yref = 0.0, light_zref = 0.0;
+GLfloat light_xref = 1.0, light_yref = -1.0, light_zref = -1.0;
+GLfloat low_shininess[] = { 5.0 };
+GLfloat high_shininess[] = { 128.0 };
 
 enum states
 {
@@ -49,19 +51,23 @@ void InitGlut(int argc, char **argv)
 
 void initLight()
 {
-    GLfloat white_light[] = {1.0, 1.0, 1.0, 1.0};
-    GLfloat light_position[] = {light_x, light_y, light_z, 0.0};
+    GLfloat white_light[] = {1.0, 1.0, 1.0, 0.0};
+    GLfloat light_position[] = {light_x, light_y, light_z, 1.0};
     GLfloat light_direction[] = {light_xref, light_yref, light_zref};
     GLfloat lmodel_ambient[] = {light_power, light_power, light_power, 1.0};
-    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
-    glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, light_direction);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, white_light);
     glLightfv(GL_LIGHT0, GL_SPECULAR, white_light);
+    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
     glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
     glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
     glEnable(GL_COLOR_MATERIAL);
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
+
+    glLightfv(GL_LIGHT1, GL_POSITION, light_position);
+    glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, light_direction);
+    glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, 60.0);
+    glEnable(GL_LIGHT1);
 }
 
 void initTextures()
@@ -82,6 +88,7 @@ void initTextures()
         gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, width, height, GL_RGB, GL_UNSIGNED_BYTE, image);
     }
 
+    //glLightModelfv(GL_SHININESS, high_shininess);
     glBindTexture(GL_TEXTURE_2D, textures[TEXTURE_WOOD]);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
