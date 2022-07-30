@@ -8,9 +8,14 @@ using namespace std;
 #include "stb_image.h"
 #define TEXTURE_MARBLE 0
 #define TEXTURE_WOOD 1
+#define TEXTURE_HELP 2
 #define START_WIDTH 1200
 #define START_HEIGHT 800
-GLuint textures[2];
+#define HELP_MAX_WIDTH 960.0
+#define HELP_MAX_HEIGHT 640.0
+#define AMBIENT_BOX_W 400.0
+#define AMBIENT_BOX_H 200.0
+GLuint textures[3];
 
 GLint winWidth = START_WIDTH, winHeight = START_HEIGHT;
 GLfloat cam_dist = 50.0, world_rot = 0.0;
@@ -78,7 +83,7 @@ void initLight()
 void initTextures()
 {
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    glGenTextures(2, textures);
+    glGenTextures(3, textures);
     glBindTexture(GL_TEXTURE_2D, textures[TEXTURE_MARBLE]);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -93,7 +98,6 @@ void initTextures()
         gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, width, height, GL_RGB, GL_UNSIGNED_BYTE, image);
     }
 
-    //glLightModelfv(GL_SHININESS, high_shininess);
     glBindTexture(GL_TEXTURE_2D, textures[TEXTURE_WOOD]);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -105,6 +109,16 @@ void initTextures()
     {
         glTexImage2D(GL_TEXTURE_2D, 8, GL_RGB, width, height, 1, GL_RGB, GL_UNSIGNED_BYTE, image);
         gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, width, height, GL_RGB, GL_UNSIGNED_BYTE, image);
+    }
+
+    glBindTexture(GL_TEXTURE_2D, textures[TEXTURE_HELP]);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_MIPMAP);
+
+    image = stbi_load("textures/help.png", &width, &height, &nrChannels, 4);
+    if (image)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 8, GL_RGBA, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, image);
+        gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, width, height, GL_RGBA, GL_UNSIGNED_BYTE, image);
     }
 
     stbi_image_free(image);
@@ -776,7 +790,7 @@ void displayString(float x, float y, void *font, const char *string)
 
 void displayAdjustAmbient()
 {
-    GLfloat box_w = 400.0 / winWidth, box_h = 200.0 / winHeight,
+    GLfloat box_w = AMBIENT_BOX_W / winWidth, box_h = AMBIENT_BOX_H / winHeight,
             box_x = 0.5 - box_w * 0.5,
             box_y = 0.5 - box_w * 0.5;
 
@@ -815,8 +829,8 @@ void displayHelp()
     GLfloat box_w, box_h;
     if(winWidth >= START_WIDTH && winHeight >= START_HEIGHT) // set to max size
     {
-        box_w = 960.0 / winWidth;
-        box_h = 640.0 / winHeight;
+        box_w = HELP_MAX_WIDTH / winWidth;
+        box_h = HELP_MAX_HEIGHT / winHeight;
     }
     else // set to relative size
     {
@@ -835,17 +849,26 @@ void displayHelp()
     glPushMatrix();
     glLoadIdentity();
 
-    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_DEPTH_TEST | GL_LIGHTING);
     glEnable(GL_BLEND);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, textures[TEXTURE_HELP]);
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
     glColor4f(0.0, 0.0, 0.0, 0.7);
     glBegin(GL_QUADS);
+    glTexCoord2f(0.0, 1.0);
     glVertex2f(box_x, box_y);
+    glTexCoord2f(1.0, 1.0);
     glVertex2f(box_x + box_w, box_y);
+    glTexCoord2f(1.0, 0.0);
     glVertex2f(box_x + box_w, box_y + box_h);
+    glTexCoord2f(0.0, 0.0);
     glVertex2f(box_x, box_y + box_h);
     glEnd();
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    glDisable(GL_TEXTURE_2D);
     glDisable(GL_BLEND);
-    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_DEPTH_TEST | GL_LIGHTING);
 
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
@@ -887,7 +910,6 @@ void displayMovingMode()
 
 void Display()
 {
-    cout << "w: " << winWidth << " h: " << winHeight << " aspect: " << aspect << "\n";
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -1179,7 +1201,7 @@ void Menu(int value)
         break;
 
     case 1:
-        show_help = true;
+        show_help = !show_help;
         glutPostRedisplay();
         break;
 
