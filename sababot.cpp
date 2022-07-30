@@ -1,14 +1,18 @@
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <GL/glut.h>
+#include <iostream>
+using namespace std;
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #define TEXTURE_MARBLE 0
 #define TEXTURE_WOOD 1
+#define START_WIDTH 1200
+#define START_HEIGHT 800
 GLuint textures[2];
 
-GLint winWidth = 1200, winHeight = 800;
+GLint winWidth = START_WIDTH, winHeight = START_HEIGHT;
 GLfloat cam_dist = 50.0, world_rot = 0.0;
 GLfloat xref = 0.0, yref = 0.0, zref = 0.0;
 GLfloat Vx = 0.0, Vy = 1.0, Vz = 0.0;
@@ -23,7 +27,7 @@ GLfloat fpx0 = body_width * 0.5, fpy0 = body_height + neck_length, fpz0 = body_d
         fpxref = 0.0, fpyref = body_height + neck_length, fpzref = 100.0,
         fpVx = 0.0, fpVy = 1.0, fpVz = 0.0;
 
-GLfloat fov = 30.0, aspect = winWidth / winHeight, zNear = 1.0, zFar = 500.0;
+GLfloat fov = 30.0, aspect = 1.0 * winWidth / winHeight, zNear = 1.0, zFar = 400.0;
 GLfloat light_power = 0.5;
 GLfloat light_x = -60.0, light_y = 60.0, light_z = 60.0;
 GLfloat light_xref = 1.0, light_yref = -1.0, light_zref = -1.0;
@@ -40,6 +44,7 @@ enum states
 int mvstate = MOV_ROBOT;
 int first_person = false;
 int adjust_ambient = false;
+int show_help = false;
 
 void InitGlut(int argc, char **argv)
 {
@@ -805,6 +810,49 @@ void displayAdjustAmbient()
     glPopMatrix();
 }
 
+void displayHelp()
+{
+    GLfloat box_w, box_h;
+    if(winWidth >= START_WIDTH && winHeight >= START_HEIGHT) // set to max size
+    {
+        box_w = 960.0 / winWidth;
+        box_h = 640.0 / winHeight;
+    }
+    else // set to relative size
+    {
+        box_w = 0.8;
+        box_h = ( box_w * winWidth * 2.0 ) / (winHeight * 3.0);
+    }
+    GLfloat box_x = 0.5 - box_w * 0.5,
+            box_y = 0.5 - box_w * 0.5;
+
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    gluOrtho2D(0.0, 1.0, 0.0, 1.0);
+
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glColor4f(0.0, 0.0, 0.0, 0.7);
+    glBegin(GL_QUADS);
+    glVertex2f(box_x, box_y);
+    glVertex2f(box_x + box_w, box_y);
+    glVertex2f(box_x + box_w, box_y + box_h);
+    glVertex2f(box_x, box_y + box_h);
+    glEnd();
+    glDisable(GL_BLEND);
+    glEnable(GL_DEPTH_TEST);
+
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
 void displayMovingMode()
 {
     glMatrixMode(GL_PROJECTION);
@@ -839,15 +887,16 @@ void displayMovingMode()
 
 void Display()
 {
+    cout << "w: " << winWidth << " h: " << winHeight << " aspect: " << aspect << "\n";
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(fov, aspect, zNear, zFar);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-
     if(first_person)
     {
-        gluLookAt(fpx0, fpy0, fpz0,
-                  fpxref, fpyref, fpzref,
-                  fpVx, fpVy, fpVz);
+        gluLookAt(fpx0, fpy0, fpz0, fpxref, fpyref, fpzref, fpVx, fpVy, fpVz);
         glRotatef(robot_y_rotate + head_y_rotate, 0.0, -1.0, 0.0);
         glRotatef(head_x_rotate, -1.0, 0.0, 0.0);
         glTranslatef(0.0, 0.0, -robot_scalar * robotz);
@@ -868,6 +917,8 @@ void Display()
 
     if(adjust_ambient)
         displayAdjustAmbient();
+    if(show_help)
+        displayHelp();
     glutSwapBuffers();
 }
 
@@ -875,14 +926,8 @@ void Reshape(GLsizei w, GLsizei h)
 {
     winWidth = w;
     winHeight = h;
-    aspect = w / h;
+    aspect = 1.0 * w / h;
     glViewport(0, 0, winWidth, winHeight);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(fov, aspect, zNear, zFar);
-    glMatrixMode(GL_MODELVIEW);
-    glutSwapBuffers();
-    glutPostRedisplay();
 }
 
 void Keyboard(unsigned char key, int x, int y)
@@ -954,14 +999,6 @@ void Keyboard(unsigned char key, int x, int y)
             break;
         }
         break;
-    case MOV_CAM:
-        switch (key)
-        {
-        case 'R':
-            /* code */
-            break;
-        }
-        break;
     case MOV_LIGHT:
         switch (key)
         {
@@ -1016,7 +1053,7 @@ void SpecialKeyboard(int key, int x, int y)
     switch (key)
     {
     case GLUT_KEY_F1: // SHOW/HIDE HELP
-        /* code */
+        show_help = !show_help;
         break;
 
     case GLUT_KEY_F2: // MOVE ROBOT STATE
@@ -1134,12 +1171,16 @@ void Menu(int value)
     switch (value)
     {
     case 0:
-        adjust_ambient = true;
-        glutPostRedisplay();
+        if(!show_help) // show only when user not reading help window
+        {
+            adjust_ambient = true;
+            glutPostRedisplay();
+        }
         break;
 
     case 1:
-        /* code */
+        show_help = true;
+        glutPostRedisplay();
         break;
 
     case 2:
