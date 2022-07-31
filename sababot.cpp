@@ -2,6 +2,7 @@
 #include <GL/glu.h>
 #include <GL/glut.h>
 #include <iostream>
+#include <vector>
 using namespace std;
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -15,6 +16,10 @@ using namespace std;
 #define HELP_MAX_HEIGHT 640.0
 #define AMBIENT_BOX_W 400.0
 #define AMBIENT_BOX_H 200.0
+#define KEY_SPACE 32
+#define KEY_BACKSPACE 8
+#define KEY_ENTER 13
+#define KEY_ESC 27
 GLuint textures[3];
 
 GLint winWidth = START_WIDTH, winHeight = START_HEIGHT;
@@ -22,7 +27,7 @@ GLfloat cam_dist = 50.0, world_rot = 0.0;
 GLfloat xref = 0.0, yref = 0.0, zref = 0.0;
 GLfloat Vx = 0.0, Vy = 1.0, Vz = 0.0;
 
-GLfloat robotx = 0.0, robotz = 1.0, robot_scalar = 1.0, robot_y_rotate = 0.0;
+GLfloat robotx = 0.0, robotz = 0.0, robot_forward = 0.0, robot_y_rotate = 0.0;
 GLfloat head_x_rotate = 0.0, head_y_rotate = 0.0;
 GLfloat shoulder_x_rotate = 90.0, shoulder_y_rotate = -10.0;
 GLfloat elbow_x_rotate = -20.0, hand_y_rotate = 0.0;
@@ -33,11 +38,13 @@ GLfloat fpx0 = body_width * 0.5, fpy0 = body_height + neck_length, fpz0 = body_d
         fpVx = 0.0, fpVy = 1.0, fpVz = 0.0;
 
 GLfloat fov = 30.0, aspect = 1.0 * winWidth / winHeight, zNear = 1.0, zFar = 400.0;
-GLfloat light_power = 0.5;
+GLfloat red = 0.5, green = 0.5, blue = 0.5;
 GLfloat light_x = -60.0, light_y = 60.0, light_z = 60.0;
 GLfloat light_xref = 1.0, light_yref = -1.0, light_zref = -1.0;
 GLfloat low_shininess[] = { 5.0 };
 GLfloat high_shininess[] = { 128.0 };
+
+vector <char> user_input = {};
 
 enum states
 {
@@ -64,7 +71,7 @@ void initLight()
     GLfloat white_light[] = {1.0, 1.0, 1.0, 0.0};
     GLfloat light_position[] = {light_x, light_y, light_z, 1.0};
     GLfloat light_direction[] = {light_xref, light_yref, light_zref};
-    GLfloat lmodel_ambient[] = {light_power, light_power, light_power, 1.0};
+    GLfloat lmodel_ambient[] = {red, green, blue, 1.0};
     glLightfv(GL_LIGHT0, GL_DIFFUSE, white_light);
     glLightfv(GL_LIGHT0, GL_SPECULAR, white_light);
     glLightfv(GL_LIGHT0, GL_POSITION, light_position);
@@ -74,9 +81,10 @@ void initLight()
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
 
+    glLightfv(GL_LIGHT1, GL_SPECULAR, white_light);
     glLightfv(GL_LIGHT1, GL_POSITION, light_position);
     glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, light_direction);
-    glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, 60.0);
+    glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, 20.0);
     glEnable(GL_LIGHT1);
 }
 
@@ -310,11 +318,20 @@ void simpleNURBS(float width, float height, float curvature)
     glDisable(GL_AUTO_NORMAL);
 }
 
+void displayTeapot(float x, float y, float z, float rot)
+{
+    glPushMatrix();
+    glTranslatef(x, y, z);
+    glRotatef(rot, 0.0, 0.1, 0.0);
+    glColor3f(0.97, 0.97, 0.85);
+    glutSolidTeapot(2.0);
+    glPopMatrix();
+}
+
 void displayTable(float posx, float posz, float height, float sizex, float sizez, float thickness)
 {
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, textures[TEXTURE_WOOD]);
-    glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
     glPushMatrix();
     glTranslatef(posx, height, posz);
     rectCuboid(sizex, thickness, sizez);
@@ -710,13 +727,15 @@ void displayRobot()
 {
     GLfloat arm_length = 3.0;
     GLfloat arm_pos[3] = {0.0, body_height * (float)0.8, body_depth * (float)0.5};
+    robotx = robot_forward * cos(robot_y_rotate);
+    robotz = robot_forward * sin(robot_y_rotate);
     glColor3f(0.6, 0.7, 1.0);
 
     glPushMatrix();
     glTranslatef(body_width * 0.5, 0.0, body_depth * 0.5);
     glRotatef(robot_y_rotate, 0.0, 1.0, 0.0);
     glTranslatef(-body_width * 0.5, 0.0, -body_depth * 0.5);
-    glTranslatef(0.0, body_depth * 0.5, robot_scalar * robotz);
+    glTranslatef(robotx, body_depth * 0.5, robotz);
 
     /* BODY */
     glPushMatrix();
@@ -794,6 +813,8 @@ void displayAdjustAmbient()
             box_x = 0.5 - box_w * 0.5,
             box_y = 0.5 - box_w * 0.5;
 
+    string s(user_input.begin(), user_input.end());
+
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
@@ -816,6 +837,10 @@ void displayAdjustAmbient()
 
     glColor3f(1.0, 1.0, 1.0);
     displayString(box_x + (30.0 / winWidth), box_y + box_h - (30.0 / winHeight), GLUT_BITMAP_HELVETICA_18, "Adjust ambient light");
+    displayString(box_x + (30.0 / winWidth), box_y + box_h - (48.0 / winHeight), GLUT_BITMAP_HELVETICA_12, "Enter 3 integers between 0-100 seperated by spaces");
+    displayString(box_x + (30.0 / winWidth), box_y + box_h - (100.0 / winHeight), GLUT_BITMAP_TIMES_ROMAN_24, s.c_str());
+    glColor3f(1.0, 0.0, 0.0);
+    displayString(box_x + (120.0 / winWidth), box_y + (30.0 / winHeight), GLUT_BITMAP_HELVETICA_12, "Press [ENTER] to continue");
     glEnable(GL_DEPTH_TEST);
 
     glMatrixMode(GL_PROJECTION);
@@ -921,7 +946,7 @@ void Display()
         gluLookAt(fpx0, fpy0, fpz0, fpxref, fpyref, fpzref, fpVx, fpVy, fpVz);
         glRotatef(robot_y_rotate + head_y_rotate, 0.0, -1.0, 0.0);
         glRotatef(head_x_rotate, -1.0, 0.0, 0.0);
-        glTranslatef(0.0, 0.0, -robot_scalar * robotz);
+        //glTranslatef(0.0, 0.0, robotz);
     }
     else
     {
@@ -931,6 +956,7 @@ void Display()
     initLight();
     displayFloor(100.0);
     displayTable(-10.0, 30.0, 10.0, 20.0, 10.0, 1.0);
+    displayTeapot(-10.0 + 10.0, 10.0 + 2.0, 30.0 + 5.0, 45.0);
     displayChair(-2.0, 20.0, 6.0, 6.0, 5.0, 1.0);
     displayFridge(-20.0, -50.0, 8.0, 24.0, 6.0);
     displayRobot();
@@ -952,8 +978,38 @@ void Reshape(GLsizei w, GLsizei h)
     glViewport(0, 0, winWidth, winHeight);
 }
 
+void HandleKeystrokes(unsigned char key)
+{
+    if(adjust_ambient)
+    {
+        if((key >= '0' && key <= '9') || key == KEY_SPACE)
+            user_input.push_back(key);
+
+        else if(key == KEY_BACKSPACE)
+            user_input.pop_back();
+
+        else if(key == KEY_ENTER)
+        {
+            string s(user_input.begin(), user_input.end());
+            sscanf(s.c_str(), "%f %f %f", &red, &green, &blue);
+            red *= 0.01;
+            green *= 0.01;
+            blue *= 0.01;
+            adjust_ambient = false;
+            user_input.clear();
+        }
+
+        else if(key == KEY_ESC)
+        {
+            adjust_ambient = false;
+            user_input.clear();
+        }
+    }
+}
+
 void Keyboard(unsigned char key, int x, int y)
 {
+    HandleKeystrokes(key);
     switch (mvstate)
     {
     case MOV_ROBOT:
@@ -1055,13 +1111,21 @@ void Keyboard(unsigned char key, int x, int y)
             break;
 
         case 'r':
-            if(light_power < 1.0)
-                light_power += 0.05;
+            if(red < 1.0 && green < 1.0 && blue < 1.0)
+            {
+                red += 0.05;
+                green += 0.05;
+                blue += 0.05;
+            }   
             break;
 
         case 'f':
-            if(light_power > 0.0)
-                light_power -= 0.05;
+            if(red > 0.0 && blue > 0.0 && green > 0.0)
+            {
+                red -= 0.05;
+                blue -= 0.05;
+                green -= 0.05;
+            }
             break;
         }
         break;
@@ -1104,11 +1168,11 @@ void SpecialKeyboard(int key, int x, int y)
             switch (key)
             {
             case GLUT_KEY_UP: // MOVE ROBOT FORWARD
-                robot_scalar += 0.5;
+                robot_forward += 0.5;
                 break;
 
             case GLUT_KEY_DOWN: // MOVE ROBOT BACKWARD
-                robot_scalar -= 0.5;
+                robot_forward -= 0.5;
                 break;
 
             case GLUT_KEY_RIGHT: // TURN RIGHT
