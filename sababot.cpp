@@ -20,6 +20,7 @@ using namespace std;
 #define KEY_BACKSPACE 8
 #define KEY_ENTER 13
 #define KEY_ESC 27
+#define PI 3.14159265
 GLuint textures[3];
 
 GLint winWidth = START_WIDTH, winHeight = START_HEIGHT;
@@ -411,9 +412,9 @@ void displayFridge(float posx, float posz, float width, float height, float dept
     rectCuboid(width, height, 1.0);
 
     glTranslatef(0.0, 0.0, 1.2);
-    //simpleNURBS(width, door_split, 1.0); // TODO: fix
+    simpleNURBS(width, door_split, 1.0); // TODO: fix
     glTranslatef(0.0, door_split, 0.0);
-    //simpleNURBS(width, height - door_split, 1.0); // TODO: fix
+    simpleNURBS(width, height - door_split, 1.0); // TODO: fix
     glPopMatrix();
 }
 
@@ -727,15 +728,14 @@ void displayRobot()
 {
     GLfloat arm_length = 3.0;
     GLfloat arm_pos[3] = {0.0, body_height * (float)0.8, body_depth * (float)0.5};
-    robotx = robot_forward * cos(robot_y_rotate);
-    robotz = robot_forward * sin(robot_y_rotate);
     glColor3f(0.6, 0.7, 1.0);
 
     glPushMatrix();
+    glTranslatef(robotx, body_depth * 0.5, robotz);
     glTranslatef(body_width * 0.5, 0.0, body_depth * 0.5);
     glRotatef(robot_y_rotate, 0.0, 1.0, 0.0);
     glTranslatef(-body_width * 0.5, 0.0, -body_depth * 0.5);
-    glTranslatef(robotx, body_depth * 0.5, robotz);
+    
 
     /* BODY */
     glPushMatrix();
@@ -944,9 +944,9 @@ void Display()
     if(first_person)
     {
         gluLookAt(fpx0, fpy0, fpz0, fpxref, fpyref, fpzref, fpVx, fpVy, fpVz);
-        glRotatef(robot_y_rotate + head_y_rotate, 0.0, -1.0, 0.0);
         glRotatef(head_x_rotate, -1.0, 0.0, 0.0);
-        //glTranslatef(0.0, 0.0, robotz);
+        glRotatef(robot_y_rotate + head_y_rotate, 0.0, -1.0, 0.0);
+        glTranslatef(-robotx, 0.0, -robotz);
     }
     else
     {
@@ -1168,19 +1168,25 @@ void SpecialKeyboard(int key, int x, int y)
             switch (key)
             {
             case GLUT_KEY_UP: // MOVE ROBOT FORWARD
-                robot_forward += 0.5;
+                if(robotx < 50.0)
+                    robotx += sin(robot_y_rotate * PI / 180.0);
+                if(robotz < 50.0)
+                    robotz += cos(robot_y_rotate * PI / 180.0);
                 break;
 
             case GLUT_KEY_DOWN: // MOVE ROBOT BACKWARD
-                robot_forward -= 0.5;
+                if(robotx > -50.0)
+                    robotx -= sin(robot_y_rotate * PI / 180.0);
+                if(robotz > -50.0)
+                robotz -= cos(robot_y_rotate * PI / 180.0);
                 break;
 
             case GLUT_KEY_RIGHT: // TURN RIGHT
-                robot_y_rotate -= 1;
+                robot_y_rotate -= 2;
                 break;
 
             case GLUT_KEY_LEFT: // TURN LEFT
-                robot_y_rotate += 1;
+                robot_y_rotate += 2;
                 break;
             
             default:
