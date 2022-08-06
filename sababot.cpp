@@ -8,8 +8,9 @@ using namespace std;
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #define TEXTURE_MARBLE 0
-#define TEXTURE_WOOD 1
-#define TEXTURE_HELP 2
+#define TEXTURE_WALL 1
+#define TEXTURE_WOOD 2
+#define TEXTURE_HELP 3
 #define START_WIDTH 1200
 #define START_HEIGHT 800
 #define HELP_MAX_WIDTH 960.0
@@ -21,10 +22,10 @@ using namespace std;
 #define KEY_ENTER 13
 #define KEY_ESC 27
 #define PI 3.14159265
-GLuint textures[3];
+GLuint textures[4];
 
 GLint winWidth = START_WIDTH, winHeight = START_HEIGHT;
-GLfloat cam_dist = 50.0, world_rot = 45.0;
+GLfloat cam_dist = 50.0, world_rot = 0.0;
 GLfloat xref = 0.0, yref = 0.0, zref = 0.0;
 GLfloat Vx = 0.0, Vy = 1.0, Vz = 0.0;
 
@@ -40,10 +41,8 @@ GLfloat fpx0 = body_width * 0.5, fpy0 = body_height + neck_length, fpz0 = body_d
 
 GLfloat fov = 30.0, aspect = 1.0 * winWidth / winHeight, zNear = 1.0, zFar = 400.0;
 GLfloat red = 0.5, green = 0.5, blue = 0.5;
-GLfloat light_x = -60.0, light_y = 60.0, light_z = 60.0;
-GLfloat light_xref = 1.0, light_yref = -1.0, light_zref = -1.0;
-GLfloat low_shininess[] = { 5.0 };
-GLfloat high_shininess[] = { 128.0 };
+GLfloat light_x = 0.0, light_y = 60.0, light_z = 0.0;
+GLfloat light_xref = 0.0, light_yref = -1.0, light_zref = 0.0;
 
 vector <char> user_input = {};
 
@@ -69,30 +68,26 @@ void InitGlut(int argc, char **argv)
 
 void initLight()
 {
-    GLfloat white_light[] = {1.0, 1.0, 1.0, 0.0};
+    GLfloat positional_light[] = {1.0, 1.0, 1.0, 0.0};
     GLfloat light_position[] = {light_x, light_y, light_z, 1.0};
-    GLfloat light_direction[] = {light_xref, light_yref, light_zref};
     GLfloat lmodel_ambient[] = {red, green, blue, 1.0};
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, white_light);
-    glLightfv(GL_LIGHT0, GL_SPECULAR, white_light);
+    GLfloat light_direction[] = {light_xref, light_yref, light_zref};
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, positional_light);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, positional_light);
     glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+    glLightf(GL_LIGHT0, GL_SPOT_CUTOFF, 90.0);
+    glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, light_direction);
     glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
     glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
     glEnable(GL_COLOR_MATERIAL);
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
-
-    glLightfv(GL_LIGHT1, GL_SPECULAR, white_light);
-    glLightfv(GL_LIGHT1, GL_POSITION, light_position);
-    glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, light_direction);
-    glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, 20.0);
-    glEnable(GL_LIGHT1);
 }
 
 void initTextures()
 {
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    glGenTextures(3, textures);
+    glGenTextures(4, textures);
     glBindTexture(GL_TEXTURE_2D, textures[TEXTURE_MARBLE]);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -105,6 +100,16 @@ void initTextures()
     {
         glTexImage2D(GL_TEXTURE_2D, 2, GL_RGB, width, height, 1, GL_RGB, GL_UNSIGNED_BYTE, image);
         gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, width, height, GL_RGB, GL_UNSIGNED_BYTE, image);
+    }
+
+    glBindTexture(GL_TEXTURE_1D, textures[TEXTURE_WALL]);
+    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_MIPMAP);
+
+    image = stbi_load("textures/wall1px.png", &width, &height, &nrChannels, 3);
+    if (image)
+    {
+        glTexImage1D(GL_TEXTURE_2D, 8, GL_RGB, width, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+        gluBuild1DMipmaps(GL_TEXTURE_1D, GL_RGB, width, GL_RGB, GL_UNSIGNED_BYTE, image);
     }
 
     glBindTexture(GL_TEXTURE_2D, textures[TEXTURE_WOOD]);
@@ -151,12 +156,15 @@ void Init()
     initTextures();
 }
 
-void displayFloor(float size)
+void displayfloor(float size)
 {
+    // Set material properties
     GLfloat specref[] = {1.0, 1.0, 1.0, 1.0};
     glMaterialfv(GL_FRONT, GL_SPECULAR, specref);
-    glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
     glMateriali(GL_FRONT, GL_SHININESS, 128);
+    glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
+
+    // Draw floor
     glPushMatrix();
     glTranslatef(-size / 2, 0.0, -size / 2);
     glColor3f(1.0, 1.0, 1.0);
@@ -164,23 +172,219 @@ void displayFloor(float size)
     glBindTexture(GL_TEXTURE_2D, textures[TEXTURE_MARBLE]);
     glBegin(GL_QUADS);
     glNormal3f(0.0, 1.0, 0.0);
-    glTexCoord2f(0.0, 0.0);
-    glVertex3f(0.0, 0.0, 0.0);
-    glTexCoord2f(0.0, 2.0);
-    glVertex3f(0.0, 0.0, size);
-    glTexCoord2f(2.0, 2.0);
-    glVertex3f(size, 0.0, size);
-    glTexCoord2f(2.0, 0.0);
-    glVertex3f(size, 0.0, 0.0);
+    int subdiv = 42;
+    float texrepeat = subdiv / 4.0;
+    for(int i=0; i<subdiv; i++)
+    {
+        for(int j=0; j<subdiv; j++)
+        {
+            glTexCoord2f(i / texrepeat, j / texrepeat);
+            glVertex3f(size * i / subdiv, 0.0, size * j / subdiv);
+            glTexCoord2f(i / texrepeat, (j + 1.0) / texrepeat);
+            glVertex3f(size * i / subdiv, 0.0, size * (j + 1.0) / subdiv);
+            glTexCoord2f((i + 1.0) / texrepeat, (j + 1.0) / texrepeat);
+            glVertex3f(size * (i + 1.0) / subdiv, 0.0, size * (j + 1.0) / subdiv);
+            glTexCoord2f((i + 1.0) / texrepeat, j / texrepeat);
+            glVertex3f(size * (i + 1.0) / subdiv, 0.0, size * j / subdiv);
+        }
+    }
     glEnd();
     glDisable(GL_TEXTURE_2D);
     glPopMatrix();
     glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SINGLE_COLOR);
 }
 
-void displayWall()
+void displayWalls(float size, float height)
 {
+    // Set material properties
+    glColor3f(1.0, 1.0, 1.0);
+    glEnable(GL_TEXTURE_1D);
+    glBindTexture(GL_TEXTURE_1D, textures[TEXTURE_WALL]);
 
+    // Draw walls
+    float camera_pos = world_rot - 45.0;
+    if(cos(camera_pos * PI / 180.0) >= 0.0)
+    {
+        // draw fridge wall
+        glPushMatrix();
+        glBegin(GL_QUADS);
+        glTexCoord1f(0.0);
+        glVertex3f(-size * 0.5, height, -size * 0.5);
+        glTexCoord1f(1.0);
+        glVertex3f(size * 0.5, height, -size * 0.5);
+        glTexCoord1f(1.0);
+        glVertex3f(size * 0.5, 0.0, -size * 0.5);
+        glTexCoord1f(0.0);
+        glVertex3f(-size * 0.5, 0.0, -size * 0.5);
+        glEnd();
+        glPopMatrix();
+    }
+    if(cos(camera_pos * PI / 180.0) <= 0.0)
+    {
+        // draw table wall
+        glPushMatrix();
+        glBegin(GL_QUADS);
+        glTexCoord1f(0.0);
+        glVertex3f(-size * 0.5, height, size * 0.5);
+        glTexCoord1f(1.0);
+        glVertex3f(size * 0.5, height, size * 0.5);
+        glTexCoord1f(1.0);
+        glVertex3f(size * 0.5, 0.0, size * 0.5);
+        glTexCoord1f(0.0);
+        glVertex3f(-size * 0.5, 0.0, size * 0.5);
+        glEnd();
+        glPopMatrix();
+    }
+    if(sin(camera_pos * PI / 180.0) >= 0.0)
+    {
+        // draw no-arm-side wall
+        glPushMatrix();
+        glBegin(GL_QUADS);
+        glTexCoord1f(0.0);
+        glVertex3f(size * 0.5, height, size * 0.5);
+        glTexCoord1f(1.0);
+        glVertex3f(size * 0.5, height, -size * 0.5);
+        glTexCoord1f(1.0);
+        glVertex3f(size * 0.5, 0.0, -size * 0.5);
+        glTexCoord1f(0.0);
+        glVertex3f(size * 0.5, 0.0, size * 0.5);
+        glEnd();
+        glPopMatrix();
+    }
+    if(sin(camera_pos * PI / 180.0) <= 0.0)
+    {
+        // draw arm-side wall
+        glPushMatrix();
+        glBegin(GL_QUADS);
+        glTexCoord1f(0.0);
+        glVertex3f(-size * 0.5, height, size * 0.5);
+        glTexCoord1f(1.0);
+        glVertex3f(-size * 0.5, height, -size * 0.5);
+        glTexCoord1f(1.0);
+        glVertex3f(-size * 0.5, 0.0, -size * 0.5);
+        glTexCoord1f(0.0);
+        glVertex3f(-size * 0.5, 0.0, size * 0.5);
+        glEnd();
+        glPopMatrix();
+    }
+    glDisable(GL_TEXTURE_1D);
+}
+
+void rectCuboid2(float x, float y, float z, int subdiv)
+{
+    // Top face
+    glBegin(GL_QUADS);
+    glNormal3f(0.0, 1.0, 0.0);
+    for(int i=0; i<subdiv; i++)
+    {
+        for(int j=0; j<subdiv; j++)
+        {
+            glTexCoord2f(i, j);
+            glVertex3f(x * i / subdiv, y, z * j / subdiv);
+            glTexCoord2f(i + 1.0, j);
+            glVertex3f(x * (i + 1.0) / subdiv, y, z * j / subdiv);
+            glTexCoord2f(i + 1.0, j + 1.0);
+            glVertex3f(x * (i + 1.0) / subdiv, y, z * (j + 1.0) / subdiv);
+            glTexCoord2f(i, j + 1.0);
+            glVertex3f(x * i / subdiv, y, z * (j + 1.0) / subdiv);
+        }
+    }
+    glEnd();
+
+    // Side face 1
+    glBegin(GL_QUADS);
+    glNormal3f(-1.0, 0.0, 0.0);
+    for(int i=0; i<subdiv; i++)
+    {
+        for(int j=0; j<subdiv; j++)
+        {
+            glTexCoord2f(i, j);
+            glVertex3f(0.0, y * i / subdiv, z * j / subdiv);
+            glTexCoord2f(i + 1.0, j);
+            glVertex3f(0.0, y * (i + 1.0) / subdiv, z * j / subdiv);
+            glTexCoord2f(i + 1.0, j + 1.0);
+            glVertex3f(0.0, y * (i + 1.0) / subdiv, z * (j + 1.0) / subdiv);
+            glTexCoord2f(i, j + 1.0);
+            glVertex3f(0.0, y * i / subdiv, z * (j + 1.0) / subdiv);
+        }
+    }
+    glEnd();
+
+    // Side face 2
+    glBegin(GL_QUADS);
+    glNormal3f(0.0, 0.0, -1.0);
+    for(int i=0; i<subdiv; i++)
+    {
+        for(int j=0; j<subdiv; j++)
+        {
+            glTexCoord2f(i, j);
+            glVertex3f(x * i / subdiv, y * j / subdiv, 0.0);
+            glTexCoord2f(i, j + 1.0);
+            glVertex3f(x * i / subdiv, y * (j + 1.0) / subdiv, 0.0);
+            glTexCoord2f(i + 1.0, j + 1.0);
+            glVertex3f(x * (i + 1.0) / subdiv, y * (j + 1.0) / subdiv, 0.0);
+            glTexCoord2f(i + 1.0, j);
+            glVertex3f(x * (i + 1.0) / subdiv, y * j / subdiv, 0.0);
+        }
+    }
+    glEnd();
+
+    // Side face 3
+    glBegin(GL_QUADS);
+    glNormal3f(1.0, 0.0, 0.0);
+    for(int i=0; i<subdiv; i++)
+    {
+        for(int j=0; j<subdiv; j++)
+        {
+            glTexCoord2f(i, j);
+            glVertex3f(x * i / subdiv, y * j / subdiv, z);
+            glTexCoord2f(i, j + 1.0);
+            glVertex3f(x * i / subdiv, y * (j + 1.0) / subdiv, z);
+            glTexCoord2f(i + 1.0, j + 1.0);
+            glVertex3f(x * (i + 1.0) / subdiv, y * (j + 1.0) / subdiv, z);
+            glTexCoord2f(i + 1.0, j);
+            glVertex3f(x * (i + 1.0) / subdiv, y * j / subdiv, z);
+        }
+    }
+    glEnd();
+
+    // Side face 4
+    glBegin(GL_QUADS);
+    glNormal3f(0.0, 0.0, 1.0);
+    for(int i=0; i<subdiv; i++)
+    {
+        for(int j=0; j<subdiv; j++)
+        {
+            glTexCoord2f(i, j);
+            glVertex3f(x, y * i / subdiv, z * j / subdiv);
+            glTexCoord2f(i + 1.0, j);
+            glVertex3f(x, y * (i + 1.0) / subdiv, z * j / subdiv);
+            glTexCoord2f(i + 1.0, j + 1.0);
+            glVertex3f(x, y * (i + 1.0) / subdiv, z * (j + 1.0) / subdiv);
+            glTexCoord2f(i, j + 1.0);
+            glVertex3f(x, y * i / subdiv, z * (j + 1.0) / subdiv);
+        }
+    }
+    glEnd();
+
+    // Bottom face
+    glBegin(GL_QUADS);
+    glNormal3f(0.0, -1.0, 0.0);
+    for(int i=0; i<subdiv; i++)
+    {
+        for(int j=0; j<subdiv; j++)
+        {
+            glTexCoord2f(i, j);
+            glVertex3f(x * i / subdiv, 0.0, z * j / subdiv);
+            glTexCoord2f(i, j + 1.0);
+            glVertex3f(x * i / subdiv, 0.0, z * (j + 1.0) / subdiv);
+            glTexCoord2f(i + 1.0, j + 1.0);
+            glVertex3f(x * (i + 1.0) / subdiv, 0.0, z * (j + 1.0) / subdiv);
+            glTexCoord2f(i + 1.0, j);
+            glVertex3f(x * (i + 1.0) / subdiv, 0.0, z * j / subdiv);
+        }
+    }
+    glEnd();
 }
 
 void rectCuboid(float x, float y, float z)
@@ -276,8 +480,13 @@ void displayTeapot(float x, float y, float z, float rot)
 
 void displayTable(float posx, float posz, float height, float sizex, float sizez, float thickness)
 {
+    // Set material properties
+    glColor3f(0.96, 0.91, 0.82);
+    glMateriali(GL_FRONT, GL_SHININESS, 5);
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, textures[TEXTURE_WOOD]);
+
+    // Start drawing table
     glPushMatrix();
     glTranslatef(posx, height, posz);
     rectCuboid(sizex, thickness, sizez);
@@ -320,7 +529,6 @@ void displayChair(float posx, float posz, float height, float seat_width, float 
     float chair_back_width = seat_width - 1.0;
     glPushMatrix();
     displayTable(posx, posz, height, seat_width, seat_depth, thickness);
-    glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, textures[TEXTURE_WOOD]);
     glTranslatef(posx, height, posz);
@@ -346,17 +554,28 @@ void displayChair(float posx, float posz, float height, float seat_width, float 
 void displayFridge(float posx, float posz, float width, float height, float depth)
 {
     float door_split = height * 0.7;
-    glColor3f(0.7, 0.7, 0.7);
+    int subdiv = 100;
+
+    // Set material properties (chrome)
+    GLfloat chrome_amb[] = {0.25, 0.25, 0.25, 1.0};
+    GLfloat chrome_diff[] = {0.4, 0.4, 0.4};
+    GLfloat chrome_spec[] = {0.774597, 0.774597, 0.774597};
+    glMaterialfv(GL_FRONT, GL_AMBIENT, chrome_amb);
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, chrome_diff);
+    glMaterialfv(GL_FRONT, GL_SPECULAR, chrome_spec);
+    glMaterialf(GL_FRONT, GL_SHININESS, 100.0);
+    glColor3f(0.5, 0.5, 0.5);
+
     glPushMatrix();
     glTranslatef(posx, 0.0, posz);
-    rectCuboid(width, height, depth); // fridge body
+    rectCuboid2(width, height, depth, subdiv); // fridge body
 
     glTranslatef(0.4, 0.0, depth);
-    rectCuboid(width - 0.8, height, 0.2);
+    rectCuboid(width - 0.8, height, 0.2); // fridge rubber
     glTranslatef(-0.4, 0.0, 0.2);
-    rectCuboid(width, door_split - 0.1, 1.0);
+    rectCuboid2(width, door_split - 0.1, 1.0, subdiv); // lower door
     glTranslatef(0.0, door_split + 0.1, 0.0);
-    rectCuboid(width, height - door_split - 0.1, 1.0);
+    rectCuboid2(width, height - door_split - 0.1, 1.0, subdiv); // upper door
     glPopMatrix();
 }
 
@@ -729,6 +948,7 @@ void displayRobot()
 
     glPushMatrix();
     glRotatef(hand_y_rotate, 0.0, 0.0, 1.0);
+    glColor3f(0.1, 0.1, 0.1);
     drawHand();
 
     glPopMatrix(); // hand
@@ -895,8 +1115,10 @@ void Display()
         gluLookAt(cam_dist, cam_dist, cam_dist, xref, yref, zref, Vx, Vy, Vz);
         glRotatef(world_rot, 0.0, 1.0, 0.0);
     }
+    cout << "xref: " << light_xref << " yref: " << light_yref << " zref: " << light_zref << "\n";
     initLight();
-    displayFloor(100.0);
+    displayfloor(100.0);
+    displayWalls(100.0, 25.0);
     displayTable(-10.0, 30.0, 10.0, 20.0, 10.0, 1.0);
     displayTeapot(-10.0 + 10.0, 10.0 + 2.0, 30.0 + 5.0, 45.0);
     displayChair(-2.0, 20.0, 6.0, 6.0, 5.0, 1.0);
@@ -1021,33 +1243,33 @@ void Keyboard(unsigned char key, int x, int y)
         switch (key)
         {
         case 'w': // MOVE LIGHT DIRECTION UP
-            if(light_yref < 180.0)
-                light_yref += 1;
+            if(light_yref < 0.0)
+                light_yref += 0.01;
             break;
 
         case 's': // MOVE LIGHT DIRECTION DOWN
-            if(light_yref > 0.0)
-                light_yref -= 1;
+            if(light_yref > -1.0)
+                light_yref -= 0.01;
             break;
 
         case 'd': // MOVE LIGHT DIRECTION TOWARDS X+
-            if(light_xref < 180.0)
-                light_xref += 1;
+            if(light_xref < 1.0)
+                light_xref += 0.01;
             break;
 
         case 'a': // MOVE LIGHT DIRECTION TOWARDS X-
-            if(light_xref > -180.0)
-                light_xref -= 1;
+            if(light_xref > -1.0)
+                light_xref -= 0.01;
             break;
 
         case 'e': // MOVE LIGHT DIRECTION TOWARDS Z+
-            if(light_zref < 180.0)
-                light_zref += 1;
+            if(light_zref < 1.0)
+                light_zref += 0.01;
             break;
 
         case 'q': // MOVE LIGHT DIRECTION TOWARDS Z-
-            if(light_zref > -180.0)
-                light_zref -= 1;
+            if(light_zref > -1.0)
+                light_zref -= 0.01;
             break;
 
         case 'r':
