@@ -24,7 +24,7 @@ using namespace std;
 GLuint textures[3];
 
 GLint winWidth = START_WIDTH, winHeight = START_HEIGHT;
-GLfloat cam_dist = 50.0, world_rot = 0.0;
+GLfloat cam_dist = 50.0, world_rot = 45.0;
 GLfloat xref = 0.0, yref = 0.0, zref = 0.0;
 GLfloat Vx = 0.0, Vy = 1.0, Vz = 0.0;
 
@@ -151,30 +151,6 @@ void Init()
     initTextures();
 }
 
-/* Helper function so I could see what I'm doing.
- * Draws x,y,z axes.
- * X is red, Y is green, Z is blue.
- */
-void displayDebug()
-{
-    glPushMatrix();
-
-    glBegin(GL_LINES);
-    glColor3f(1.0, 0.0, 0.0);
-    glVertex3f(0.0, 0.0, 0.0);
-    glVertex3f(1000.0, 0.0, 0.0);
-
-    glColor3f(0.0, 1.0, 0.0);
-    glVertex3f(0.0, 0.0, 0.0);
-    glVertex3f(0.0, 1000.0, 0.0);
-
-    glColor3f(0.0, 0.0, 1.0);
-    glVertex3f(0.0, 0.0, 0.0);
-    glVertex3f(0.0, 0.0, 1000.0);
-    glEnd();
-    glPopMatrix();
-}
-
 void displayFloor(float size)
 {
     GLfloat specref[] = {1.0, 1.0, 1.0, 1.0};
@@ -200,6 +176,11 @@ void displayFloor(float size)
     glDisable(GL_TEXTURE_2D);
     glPopMatrix();
     glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SINGLE_COLOR);
+}
+
+void displayWall()
+{
+
 }
 
 void rectCuboid(float x, float y, float z)
@@ -281,42 +262,6 @@ void rectCuboid(float x, float y, float z)
     glTexCoord2f(1.0, 0.0);
     glVertex3f(x, 0.0, 0.0);
     glEnd();
-}
-
-void simpleNURBS(float width, float height, float curvature)
-{
-    GLfloat ctlpoints[4][4][3];
-    GLUnurbsObj *theNurb;
-    GLfloat knots[8] = {0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0};
-
-    // init surface
-    int u, v;
-    for (u = 0; u < 4; u++)
-    {
-        for (v = 0; v < 4; v++)
-        {
-            ctlpoints[u][v][0] = width * ((GLfloat)u / 3.0);
-            ctlpoints[u][v][1] = height * ((GLfloat)v / 3.0);
-
-            if ((u == 1 || u == 2) && (v == 1 || v == 2))
-                ctlpoints[u][v][2] = curvature;
-            else
-                ctlpoints[u][v][2] = 0.0;
-        }
-    }
-
-    theNurb = gluNewNurbsRenderer();
-    gluNurbsProperty(theNurb, GLU_SAMPLING_TOLERANCE, 25.0);
-    gluNurbsProperty(theNurb, GLU_DISPLAY_MODE, GLU_FILL);
-
-    glEnable(GL_AUTO_NORMAL);
-    gluBeginSurface(theNurb);
-    gluNurbsSurface(theNurb,
-                    8, knots, 8, knots,
-                    4 * 3, 3, &ctlpoints[0][0][0],
-                    4, 4, GL_MAP2_VERTEX_3);
-    gluEndSurface(theNurb);
-    glDisable(GL_AUTO_NORMAL);
 }
 
 void displayTeapot(float x, float y, float z, float rot)
@@ -404,17 +349,14 @@ void displayFridge(float posx, float posz, float width, float height, float dept
     glColor3f(0.7, 0.7, 0.7);
     glPushMatrix();
     glTranslatef(posx, 0.0, posz);
-    rectCuboid(width, height, depth);
+    rectCuboid(width, height, depth); // fridge body
 
-    glTranslatef(0.3, 0.0, depth);
-    rectCuboid(width - 0.6, height, 0.2);
-    glTranslatef(-0.2, 0.0, 0.2);
-    rectCuboid(width, height, 1.0);
-
-    glTranslatef(0.0, 0.0, 1.2);
-    simpleNURBS(width, door_split, 1.0); // TODO: fix
-    glTranslatef(0.0, door_split, 0.0);
-    simpleNURBS(width, height - door_split, 1.0); // TODO: fix
+    glTranslatef(0.4, 0.0, depth);
+    rectCuboid(width - 0.8, height, 0.2);
+    glTranslatef(-0.4, 0.0, 0.2);
+    rectCuboid(width, door_split - 0.1, 1.0);
+    glTranslatef(0.0, door_split + 0.1, 0.0);
+    rectCuboid(width, height - door_split - 0.1, 1.0);
     glPopMatrix();
 }
 
@@ -960,9 +902,7 @@ void Display()
     displayChair(-2.0, 20.0, 6.0, 6.0, 5.0, 1.0);
     displayFridge(-20.0, -50.0, 8.0, 24.0, 6.0);
     displayRobot();
-    displayDebug();
     displayMovingMode();
-
     if(adjust_ambient)
         displayAdjustAmbient();
     if(show_help)
