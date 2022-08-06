@@ -22,7 +22,7 @@ using namespace std;
 #define KEY_ENTER 13
 #define KEY_ESC 27
 #define PI 3.14159265
-GLuint textures[4];
+GLuint textures[5];
 
 GLint winWidth = START_WIDTH, winHeight = START_HEIGHT;
 GLfloat cam_dist = 50.0, world_rot = 0.0;
@@ -87,7 +87,7 @@ void initLight()
 void initTextures()
 {
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    glGenTextures(4, textures);
+    glGenTextures(5, textures);
     glBindTexture(GL_TEXTURE_2D, textures[TEXTURE_MARBLE]);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -101,7 +101,6 @@ void initTextures()
         glTexImage2D(GL_TEXTURE_2D, 2, GL_RGB, width, height, 1, GL_RGB, GL_UNSIGNED_BYTE, image);
         gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, width, height, GL_RGB, GL_UNSIGNED_BYTE, image);
     }
-
     glBindTexture(GL_TEXTURE_1D, textures[TEXTURE_WALL]);
     glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_MIPMAP);
 
@@ -581,7 +580,7 @@ void displayFridge(float posx, float posz, float width, float height, float dept
 
 void drawHand()
 {
-    glEnable(GL_NORMALIZE);
+    glEnable(GL_NORMALIZE | GL_AUTO_NORMAL);
     glBegin(GL_POLYGON);
     glVertex3d(-0.358546, 0.658333, 0.121825);
     glVertex3d(-0.070166, 0.314921, -0.003107);
@@ -882,7 +881,7 @@ void drawHand()
     glVertex3d(-0.086638, -0.287777, -0.057556);
     glVertex3d(0.188598, -0.140939, -0.083516);
     glEnd();
-    glDisable(GL_NORMALIZE);
+    glDisable(GL_NORMALIZE | GL_AUTO_NORMAL);
 }
 
 void displayRobot()
@@ -1115,7 +1114,6 @@ void Display()
         gluLookAt(cam_dist, cam_dist, cam_dist, xref, yref, zref, Vx, Vy, Vz);
         glRotatef(world_rot, 0.0, 1.0, 0.0);
     }
-    cout << "xref: " << light_xref << " yref: " << light_yref << " zref: " << light_zref << "\n";
     initLight();
     displayfloor(100.0);
     displayWalls(100.0, 25.0);
