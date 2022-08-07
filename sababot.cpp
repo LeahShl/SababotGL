@@ -68,12 +68,12 @@ void InitGlut(int argc, char **argv)
 
 void initLight()
 {
-    GLfloat positional_light[] = {1.0, 1.0, 1.0, 0.0};
+    GLfloat white_light[] = {1.0, 1.0, 1.0, 0.0};
     GLfloat light_position[] = {light_x, light_y, light_z, 1.0};
     GLfloat lmodel_ambient[] = {red, green, blue, 1.0};
     GLfloat light_direction[] = {light_xref, light_yref, light_zref};
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, positional_light);
-    glLightfv(GL_LIGHT0, GL_SPECULAR, positional_light);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, white_light);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, white_light);
     glLightfv(GL_LIGHT0, GL_POSITION, light_position);
     glLightf(GL_LIGHT0, GL_SPOT_CUTOFF, 90.0);
     glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, light_direction);
@@ -158,8 +158,6 @@ void Init()
 void displayfloor(float size)
 {
     // Set material properties
-    GLfloat specref[] = {1.0, 1.0, 1.0, 1.0};
-    glMaterialfv(GL_FRONT, GL_SPECULAR, specref);
     glMateriali(GL_FRONT, GL_SHININESS, 128);
     glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
 
@@ -202,7 +200,7 @@ void displayWalls(float size, float height)
 
     // Draw walls
     float camera_pos = world_rot - 45.0;
-    if(cos(camera_pos * PI / 180.0) >= 0.0)
+    if(first_person || cos(camera_pos * PI / 180.0) >= 0.0)
     {
         // draw fridge wall
         glPushMatrix();
@@ -218,7 +216,7 @@ void displayWalls(float size, float height)
         glEnd();
         glPopMatrix();
     }
-    if(cos(camera_pos * PI / 180.0) <= 0.0)
+    if(first_person || cos(camera_pos * PI / 180.0) <= 0.0)
     {
         // draw table wall
         glPushMatrix();
@@ -234,7 +232,7 @@ void displayWalls(float size, float height)
         glEnd();
         glPopMatrix();
     }
-    if(sin(camera_pos * PI / 180.0) >= 0.0)
+    if(first_person || sin(camera_pos * PI / 180.0) >= 0.0)
     {
         // draw no-arm-side wall
         glPushMatrix();
@@ -250,7 +248,7 @@ void displayWalls(float size, float height)
         glEnd();
         glPopMatrix();
     }
-    if(sin(camera_pos * PI / 180.0) <= 0.0)
+    if(first_person || sin(camera_pos * PI / 180.0) <= 0.0)
     {
         // draw arm-side wall
         glPushMatrix();
@@ -886,6 +884,7 @@ void drawHand()
 
 void displayRobot()
 {
+    glMaterialf(GL_FRONT, GL_SHININESS, 70.0);
     GLfloat arm_length = 3.0;
     GLfloat arm_pos[3] = {0.0, body_height * (float)0.8, body_depth * (float)0.5};
     glColor3f(0.6, 0.7, 1.0);
@@ -915,11 +914,24 @@ void displayRobot()
     glRotatef(head_x_rotate, 1.0, 0.0, 0.0);
     glRotatef(head_y_rotate, 0.0, 1.0, 0.0);
     glTranslatef(-body_width * 0.5, 0.0, -body_depth * 0.5);
-    rectCuboid(body_width * 0.75, body_height * 0.5, body_depth);
+    rectCuboid(body_width * 0.75, body_height * 0.4, body_depth);
+
+    /* FACE */
+    glPushMatrix();
+    glTranslatef(body_width * 0.375, body_height * 0.15, body_depth);
+    gluCylinder(gluNewQuadric(), 0.4, 0.1, 0.4, 10.0, 10.0);
+    glColor3f(0.1, 0.1, 0.2);
+    glMaterialf(GL_FRONT, GL_SHININESS, 128.0);
+    glTranslatef(body_width * 0.1875, body_height * 0.1, -0.5);
+    gluSphere(gluNewQuadric(), 0.8, 10, 10);
+    glTranslatef(-body_width * 0.375, 0.0, 0.0);
+    gluSphere(gluNewQuadric(), 0.8, 10, 10);
+    glPopMatrix();
     glPopMatrix();
 
     /* WHEELS */
     glColor3f(0.3, 0.3, 0.3); 
+    glMaterialf(GL_FRONT, GL_SHININESS, 70.0);
     glPushMatrix();
     glTranslatef(0.2, 0.0, body_depth * 0.5);
     glRotatef(90.0, 0.0, 1.0, 0.0);
@@ -1115,6 +1127,9 @@ void Display()
         glRotatef(world_rot, 0.0, 1.0, 0.0);
     }
     initLight();
+    cout << "robotx: " << robotx << " robotz: " << robotz << "\n"
+         << "robotx > -50 " << (robotx > -50.0) << " robotz > -50 " << (robotz > -50.0) << "\n"
+         << "robotx < 50 " << (robotx < 50.0) << " robotz < 50 " << (robotz < 50.0) << "\n\n";
     displayfloor(100.0);
     displayWalls(100.0, 25.0);
     displayTable(-10.0, 30.0, 10.0, 20.0, 10.0, 1.0);
@@ -1328,17 +1343,19 @@ void SpecialKeyboard(int key, int x, int y)
             switch (key)
             {
             case GLUT_KEY_UP: // MOVE ROBOT FORWARD
-                if(robotx < 50.0)
-                    robotx += sin(robot_y_rotate * PI / 180.0);
-                if(robotz < 50.0)
-                    robotz += cos(robot_y_rotate * PI / 180.0);
+                cout << "sin: " << sin(robot_y_rotate * PI / 180.0) << " cos: " << cos(robot_y_rotate * PI / 180.0) << "\n";
+                if(robotx < 50.0 && robotx > -50.0)
+                    robotx += 0.5 * sin(robot_y_rotate * PI / 180.0);
+                if(robotz < 50.0 && robotz > -50.0)
+                    robotz += 0.5 * cos(robot_y_rotate * PI / 180.0);
                 break;
 
-            case GLUT_KEY_DOWN: // MOVE ROBOT BACKWARD
-                if(robotx > -50.0)
-                    robotx -= sin(robot_y_rotate * PI / 180.0);
-                if(robotz > -50.0)
-                robotz -= cos(robot_y_rotate * PI / 180.0);
+            case GLUT_KEY_DOWN: // MOVE ROBOT BACKWARDS
+                cout << "sin: " << sin(robot_y_rotate * PI / 180.0) << " cos: " << cos(robot_y_rotate * PI / 180.0) << "\n";
+                if(robotx < 50.0 && robotx > -50.0)
+                    robotx += 0.5 * sin((180.0 + robot_y_rotate) * PI / 180.0);
+                if(robotz < 50.0 && robotz > -50.0)
+                    robotz += 0.5 * cos((180.0 + robot_y_rotate) * PI / 180.0);
                 break;
 
             case GLUT_KEY_RIGHT: // TURN RIGHT
