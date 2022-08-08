@@ -27,6 +27,19 @@ using namespace std;
 #define TEXTURE_HELP 3
 GLuint textures[5];
 
+#define FLOOR_SIZE 100.0
+#define TABLE_HEIGHT 10.0
+#define TABLE_SIZEX 20.0
+#define TABLE_SIZEZ 10.0
+#define TABLE_THICKNESS 1.0
+#define CHAIR_SEAT_WIDTH 6.0
+#define CHAIR_SEAT_DEPTH 5.0
+#define FRIDGE_WIDTH 8.0
+#define FRIDGE_HEIGHT 24.0
+#define FRIDGE_DEPTH 6.0
+#define BIN_WIDTH 5.0
+#define BIN_HEIGHT 5.0
+
 GLint win_width = START_WIDTH, win_height = START_HEIGHT;
 GLfloat cam_dist = 50.0, world_rot = 0.0;
 GLfloat xref = 0.0, yref = 0.0, zref = 0.0;
@@ -67,24 +80,6 @@ void InitGlut(int argc, char **argv)
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
     glutInitWindowSize(win_width, win_height);
     glutCreateWindow("SababotGL");
-}
-
-void initLight()
-{
-    GLfloat white_light[] = {1.0, 1.0, 1.0, 0.0};
-    GLfloat light_position[] = {light_x, light_y, light_z, 1.0};
-    GLfloat lmodel_ambient[] = {red, green, blue, 1.0};
-    GLfloat light_direction[] = {light_xref, light_yref, light_zref};
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, white_light);
-    glLightfv(GL_LIGHT0, GL_SPECULAR, white_light);
-    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
-    glLightf(GL_LIGHT0, GL_SPOT_CUTOFF, 90.0);
-    glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, light_direction);
-    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
-    glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
-    glEnable(GL_COLOR_MATERIAL);
-    glEnable(GL_LIGHTING);
-    glEnable(GL_LIGHT0);
 }
 
 void loadTexture(const char *filename, GLenum target, GLenum format, int nchannels)
@@ -148,14 +143,25 @@ void Init()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_MULTISAMPLE);
-
-    // Init camera
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(fov, aspect, zNear, zFar);
-    glMatrixMode(GL_MODELVIEW);
-
     initTextures();
+}
+
+void initLight()
+{
+    GLfloat white_light[] = {1.0, 1.0, 1.0, 0.0};
+    GLfloat light_position[] = {light_x, light_y, light_z, 1.0};
+    GLfloat lmodel_ambient[] = {red, green, blue, 1.0};
+    GLfloat light_direction[] = {light_xref, light_yref, light_zref};
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, white_light);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, white_light);
+    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+    glLightf(GL_LIGHT0, GL_SPOT_CUTOFF, 90.0);
+    glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, light_direction);
+    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
+    glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
+    glEnable(GL_COLOR_MATERIAL);
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
 }
 
 void displayfloor(float size)
@@ -584,13 +590,13 @@ void displayBin(float posx, float posz, float width, float height)
     glPushMatrix();
     glTranslatef(posx, 0.0, posz);
     glRotatef(-90.0, 1.0, 0.0, 0.0);
-    gluCylinder(gluNewQuadric(), width * 0.8, width, height, 30.0, 30.0);
+    gluCylinder(gluNewQuadric(), width * 0.4, width * 0.5, height, 30.0, 30.0);
     glPopMatrix();
 }
 
 void drawHand()
 {
-    glEnable(GL_NORMALIZE | GL_AUTO_NORMAL);
+    glEnable(GL_AUTO_NORMAL);
     glBegin(GL_POLYGON);
     glVertex3d(-0.358546, 0.658333, 0.121825);
     glVertex3d(-0.070166, 0.314921, -0.003107);
@@ -891,7 +897,7 @@ void drawHand()
     glVertex3d(-0.086638, -0.287777, -0.057556);
     glVertex3d(0.188598, -0.140939, -0.083516);
     glEnd();
-    glDisable(GL_NORMALIZE | GL_AUTO_NORMAL);
+    glDisable(GL_AUTO_NORMAL);
 }
 
 void displayRobot()
@@ -1059,7 +1065,8 @@ void displayHelp()
     glPushMatrix();
     glLoadIdentity();
 
-    glDisable(GL_DEPTH_TEST | GL_LIGHTING);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, textures[TEXTURE_HELP]);
@@ -1078,7 +1085,8 @@ void displayHelp()
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_BLEND);
-    glEnable(GL_DEPTH_TEST | GL_LIGHTING);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_LIGHTING);
 
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
@@ -1139,13 +1147,13 @@ void Display()
         glRotatef(world_rot, 0.0, 1.0, 0.0);
     }
     initLight();
-    displayfloor(100.0);
-    displayWalls(100.0, 25.0);
-    displayTable(-10.0, 30.0, 10.0, 20.0, 10.0, 1.0);
-    displayTeapot(-10.0 + 10.0, 10.0 + 2.0, 30.0 + 5.0, 45.0);
-    displayChair(-2.0, 20.0, 6.0, 6.0, 5.0, 1.0);
-    displayFridge(-20.0, -50.0, 8.0, 24.0, 6.0);
-    displayBin(-5.0, -45.0, 2.5, 5.0);
+    displayfloor(FLOOR_SIZE);
+    displayWalls(FLOOR_SIZE, FLOOR_SIZE * 0.3);
+    displayTable(-TABLE_SIZEX * 0.5, FLOOR_SIZE * 0.5 - 20.0, TABLE_HEIGHT, TABLE_SIZEX, TABLE_SIZEZ, TABLE_THICKNESS);
+    displayTeapot(0.0, TABLE_HEIGHT + 2.0, FLOOR_SIZE * 0.5 - 15.0, 45.0);
+    displayChair(-CHAIR_SEAT_WIDTH * 0.5, FLOOR_SIZE * 0.5 - 20.0 - 2 * CHAIR_SEAT_DEPTH, TABLE_HEIGHT - 4.0, CHAIR_SEAT_WIDTH, CHAIR_SEAT_DEPTH, TABLE_THICKNESS);
+    displayFridge(-FLOOR_SIZE * 0.2, -FLOOR_SIZE * 0.5, FRIDGE_WIDTH, FRIDGE_HEIGHT, FRIDGE_DEPTH);
+    displayBin(-5.0, -FLOOR_SIZE * 0.5 + 5.0, 5.0, 5.0);
     displayRobot();
     displayMovingMode();
     if(adjust_ambient)
