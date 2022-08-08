@@ -1,85 +1,44 @@
+#include "sababot.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <GL/glut.h>
 #include <iostream>
 #include <vector>
-using namespace std;
-
-#define START_WIDTH 1200
-#define START_HEIGHT 800
-#define HELP_MAX_WIDTH 960.0
-#define HELP_MAX_HEIGHT 640.0
-#define AMBIENT_BOX_W 400.0
-#define AMBIENT_BOX_H 200.0
-
-#define KEY_SPACE 32
-#define KEY_BACKSPACE 8
-#define KEY_ENTER 13
-#define KEY_ESC 27
-
-#define PI 3.14159265
-
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-#define TEXTURE_MARBLE 0
-#define TEXTURE_WALL 1
-#define TEXTURE_WOOD 2
-#define TEXTURE_HELP 3
-GLuint textures[5];
-
-#define FLOOR_SIZE 100.0
-#define TABLE_HEIGHT 10.0
-#define TABLE_SIZEX 20.0
-#define TABLE_SIZEZ 10.0
-#define TABLE_THICKNESS 1.0
-#define CHAIR_SEAT_WIDTH 6.0
-#define CHAIR_SEAT_DEPTH 5.0
-#define FRIDGE_WIDTH 8.0
-#define FRIDGE_HEIGHT 24.0
-#define FRIDGE_DEPTH 6.0
-#define BIN_WIDTH 5.0
-#define BIN_HEIGHT 5.0
-
-GLint win_width = START_WIDTH, win_height = START_HEIGHT;
-GLfloat cam_dist = 50.0, world_rot = 0.0;
-GLfloat xref = 0.0, yref = 0.0, zref = 0.0;
-GLfloat Vx = 0.0, Vy = 1.0, Vz = 0.0;
-
-GLfloat robotx = 0.0, robotz = 0.0, robot_forward = 0.0, robot_y_rotate = 0.0;
-GLfloat head_x_rotate = 0.0, head_y_rotate = 0.0;
-GLfloat shoulder_x_rotate = 90.0, shoulder_y_rotate = -10.0;
-GLfloat elbow_x_rotate = -20.0, hand_y_rotate = 0.0;
-
-GLfloat body_width = 6.0, body_height = 10.0, body_depth = 3.0, neck_length = 1.0;
-GLfloat fpx0 = body_width * 0.5, fpy0 = body_height + neck_length, fpz0 = body_depth + 0.9,
-        fpxref = 0.0, fpyref = body_height + neck_length, fpzref = 100.0,
-        fpVx = 0.0, fpVy = 1.0, fpVz = 0.0;
-
-GLfloat fov = 30.0, aspect = 1.0 * win_width / win_height, zNear = 1.0, zFar = 400.0;
-GLfloat red = 0.5, green = 0.5, blue = 0.5;
-GLfloat light_x = 0.0, light_y = 60.0, light_z = 0.0;
-GLfloat light_xref = 0.0, light_yref = -1.0, light_zref = 0.0;
-
-vector <char> user_input = {};
-
-enum states
-{
-    MOV_ROBOT,
-    MOV_CAM,
-    MOV_LIGHT
-};
 
 int mvstate = MOV_ROBOT;
 int first_person = false;
 int adjust_ambient = false;
 int show_help = false;
 
-void InitGlut(int argc, char **argv)
+GLuint textures[5];
+
+GLint win_width = START_WIDTH, win_height = START_HEIGHT;
+GLfloat cam_dist = 50.0, world_rot = 0.0;
+GLfloat xref = 0.0, yref = 0.0, zref = 0.0;
+GLfloat Vx = 0.0, Vy = 1.0, Vz = 0.0;
+GLfloat fov = 30.0, aspect = 1.0 * win_width / win_height, zNear = 1.0, zFar = 400.0;
+
+GLfloat robotx = 0.0, robotz = 0.0, robot_forward = 0.0, robot_y_rotate = 0.0;
+GLfloat head_x_rotate = 0.0, head_y_rotate = 0.0;
+GLfloat shoulder_x_rotate = 90.0, shoulder_y_rotate = -10.0;
+GLfloat elbow_x_rotate = -20.0, hand_y_rotate = 0.0;
+GLfloat body_width = 6.0, body_height = 10.0, body_depth = 3.0, neck_length = 1.0;
+
+GLfloat fpx0 = body_width * 0.5, fpy0 = body_height + neck_length, fpz0 = body_depth + 0.9,
+        fpxref = 0.0, fpyref = body_height + neck_length, fpzref = 100.0,
+        fpVx = 0.0, fpVy = 1.0, fpVz = 0.0;
+
+GLfloat red = 0.5, green = 0.5, blue = 0.5;
+GLfloat light_x = 0.0, light_y = 60.0, light_z = 0.0;
+GLfloat light_xref = 0.0, light_yref = -1.0, light_zref = 0.0;
+
+std::vector <char> user_input = {};
+
+void updateWindowAspect(float new_aspect)
 {
-    glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-    glutInitWindowSize(win_width, win_height);
-    glutCreateWindow("SababotGL");
+    aspect = new_aspect;
 }
 
 void loadTexture(const char *filename, GLenum target, GLenum format, int nchannels)
@@ -100,7 +59,7 @@ void loadTexture(const char *filename, GLenum target, GLenum format, int nchanne
         }
     }
     else
-        cout << "ERROR loading texture \"" << filename << "\"\n";
+        std::cout << "ERROR loading texture \"" << filename << "\"\n";
 
     stbi_image_free(image);
 }
@@ -136,14 +95,25 @@ void initTextures()
     loadTexture("textures/help.png", GL_TEXTURE_2D, GL_RGBA, 4);
 }
 
-void Init()
+void initCamera()
 {
-    glClearColor(0.0, 0.0, 0.0, 0.0);
-    glShadeModel(GL_SMOOTH);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_MULTISAMPLE);
-    initTextures();
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(fov, aspect, zNear, zFar);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    if(first_person)
+    {
+        gluLookAt(fpx0, fpy0, fpz0, fpxref, fpyref, fpzref, fpVx, fpVy, fpVz);
+        glRotatef(head_x_rotate, -1.0, 0.0, 0.0);
+        glRotatef(robot_y_rotate + head_y_rotate, 0.0, -1.0, 0.0);
+        glTranslatef(-robotx, 0.0, -robotz);
+    }
+    else
+    {
+        gluLookAt(cam_dist, cam_dist, cam_dist, xref, yref, zref, Vx, Vy, Vz);
+        glRotatef(world_rot, 0.0, 1.0, 0.0);
+    }
 }
 
 void initLight()
@@ -276,7 +246,7 @@ void displayWalls(float size, float height)
     glDisable(GL_TEXTURE_1D);
 }
 
-void rectCuboid2(float x, float y, float z, int subdiv)
+void rectCuboidDiv(float x, float y, float z, int subdiv)
 {
     // Top face
     glBegin(GL_QUADS);
@@ -395,83 +365,7 @@ void rectCuboid2(float x, float y, float z, int subdiv)
 
 void rectCuboid(float x, float y, float z)
 {
-    // Top face
-    glBegin(GL_QUADS);
-    glNormal3f(0.0, 1.0, 0.0);
-    glTexCoord2f(0.0, 0.0);
-    glVertex3f(0.0, y, 0.0);
-    glTexCoord2f(1.0, 0.0);
-    glVertex3f(x, y, 0.0);
-    glTexCoord2f(1.0, 1.0);
-    glVertex3f(x, y, z);
-    glTexCoord2f(0.0, 1.0);
-    glVertex3f(0.0, y, z);
-    glEnd();
-
-    // Side face 1
-    glBegin(GL_QUADS);
-    glNormal3f(-1.0, 0.0, 0.0);
-    glTexCoord2f(0.0, 0.0);
-    glVertex3f(0.0, 0.0, 0.0);
-    glTexCoord2f(1.0, 0.0);
-    glVertex3f(0.0, y, 0.0);
-    glTexCoord2f(1.0, 1.0);
-    glVertex3f(0.0, y, z);
-    glTexCoord2f(0.0, 1.0);
-    glVertex3f(0.0, 0.0, z);
-    glEnd();
-
-    // Side face 2
-    glBegin(GL_QUADS);
-    glNormal3f(0.0, 0.0, -1.0);
-    glTexCoord2f(0.0, 0.0);
-    glVertex3f(0.0, 0.0, 0.0);
-    glTexCoord2f(0.0, 1.0);
-    glVertex3f(0.0, y, 0.0);
-    glTexCoord2f(1.0, 1.0);
-    glVertex3f(x, y, 0.0);
-    glTexCoord2f(1.0, 0.0);
-    glVertex3f(x, 0.0, 0.0);
-    glEnd();
-
-    // Side face 3
-    glBegin(GL_QUADS);
-    glNormal3f(1.0, 0.0, 0.0);
-    glTexCoord2f(0.0, 0.0);
-    glVertex3f(0.0, 0.0, z);
-    glTexCoord2f(0.0, 1.0);
-    glVertex3f(0.0, y, z);
-    glTexCoord2f(1.0, 1.0);
-    glVertex3f(x, y, z);
-    glTexCoord2f(1.0, 0.0);
-    glVertex3f(x, 0.0, z);
-    glEnd();
-
-    // Side face 4
-    glBegin(GL_QUADS);
-    glNormal3f(0.0, 0.0, 1.0);
-    glTexCoord2f(0.0, 0.0);
-    glVertex3f(x, 0.0, 0.0);
-    glTexCoord2f(1.0, 0.0);
-    glVertex3f(x, y, 0.0);
-    glTexCoord2f(1.0, 1.0);
-    glVertex3f(x, y, z);
-    glTexCoord2f(0.0, 1.0);
-    glVertex3f(x, 0.0, z);
-    glEnd();
-
-    // Bottom face
-    glBegin(GL_QUADS);
-    glNormal3f(0.0, -1.0, 0.0);
-    glTexCoord2f(0.0, 0.0);
-    glVertex3f(0.0, 0.0, 0.0);
-    glTexCoord2f(0.0, 1.0);
-    glVertex3f(0.0, 0.0, z);
-    glTexCoord2f(1.0, 1.0);
-    glVertex3f(x, 0.0, z);
-    glTexCoord2f(1.0, 0.0);
-    glVertex3f(x, 0.0, 0.0);
-    glEnd();
+    rectCuboidDiv(x, y, z, 1);
 }
 
 void displayTeapot(float x, float y, float z, float rot)
@@ -574,14 +468,14 @@ void displayFridge(float posx, float posz, float width, float height, float dept
 
     glPushMatrix();
     glTranslatef(posx, 0.0, posz);
-    rectCuboid2(width, height, depth, subdiv); // fridge body
+    rectCuboidDiv(width, height, depth, subdiv); // fridge body
 
     glTranslatef(0.4, 0.0, depth);
     rectCuboid(width - 0.8, height, 0.2); // fridge rubber
     glTranslatef(-0.4, 0.0, 0.2);
-    rectCuboid2(width, door_split - 0.1, 1.0, subdiv); // lower door
+    rectCuboidDiv(width, door_split - 0.1, 1.0, subdiv); // lower door
     glTranslatef(0.0, door_split + 0.1, 0.0);
-    rectCuboid2(width, height - door_split - 0.1, 1.0, subdiv); // upper door
+    rectCuboidDiv(width, height - door_split - 0.1, 1.0, subdiv); // upper door
     glPopMatrix();
 }
 
@@ -1000,98 +894,114 @@ void displayString(float x, float y, void *font, const char *string)
 
 void displayAdjustAmbient()
 {
-    GLfloat box_w = AMBIENT_BOX_W / win_width, box_h = AMBIENT_BOX_H / win_height,
-            box_x = 0.5 - box_w * 0.5,
-            box_y = 0.5 - box_w * 0.5;
+    if(adjust_ambient)
+    {    GLfloat box_w = AMBIENT_BOX_W / win_width, box_h = AMBIENT_BOX_H / win_height,
+                box_x = 0.5 - box_w * 0.5,
+                box_y = 0.5 - box_w * 0.5;
 
-    string s(user_input.begin(), user_input.end());
+        std::string s(user_input.begin(), user_input.end());
 
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    gluOrtho2D(0.0, 1.0, 0.0, 1.0);
+        glMatrixMode(GL_PROJECTION);
+        glPushMatrix();
+        glLoadIdentity();
+        gluOrtho2D(0.0, 1.0, 0.0, 1.0);
 
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glLoadIdentity();
 
-    glDisable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
-    glColor4f(0.0, 0.0, 0.0, 0.7);
-    glBegin(GL_QUADS);
-    glVertex2f(box_x, box_y);
-    glVertex2f(box_x + box_w, box_y);
-    glVertex2f(box_x + box_w, box_y + box_h);
-    glVertex2f(box_x, box_y + box_h);
-    glEnd();
-    glDisable(GL_BLEND);
+        glDisable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
+        glColor4f(0.0, 0.0, 0.0, 0.7);
+        glBegin(GL_QUADS);
+        glVertex2f(box_x, box_y);
+        glVertex2f(box_x + box_w, box_y);
+        glVertex2f(box_x + box_w, box_y + box_h);
+        glVertex2f(box_x, box_y + box_h);
+        glEnd();
+        glDisable(GL_BLEND);
 
-    glColor3f(1.0, 1.0, 1.0);
-    displayString(box_x + (30.0 / win_width), box_y + box_h - (30.0 / win_height), GLUT_BITMAP_HELVETICA_18, "Adjust ambient light");
-    displayString(box_x + (30.0 / win_width), box_y + box_h - (48.0 / win_height), GLUT_BITMAP_HELVETICA_12, "Enter 3 integers between 0-100 seperated by spaces");
-    displayString(box_x + (30.0 / win_width), box_y + box_h - (100.0 / win_height), GLUT_BITMAP_TIMES_ROMAN_24, s.c_str());
-    glColor3f(1.0, 0.0, 0.0);
-    displayString(box_x + (120.0 / win_width), box_y + (30.0 / win_height), GLUT_BITMAP_HELVETICA_12, "Press [ENTER] to continue");
-    glEnable(GL_DEPTH_TEST);
+        glColor3f(1.0, 1.0, 1.0);
+        displayString(box_x + (30.0 / win_width), box_y + box_h - (30.0 / win_height), GLUT_BITMAP_HELVETICA_18, "Adjust ambient light");
+        displayString(box_x + (30.0 / win_width), box_y + box_h - (48.0 / win_height), GLUT_BITMAP_HELVETICA_12, "Enter 3 integers between 0-100 seperated by spaces");
+        displayString(box_x + (30.0 / win_width), box_y + box_h - (100.0 / win_height), GLUT_BITMAP_TIMES_ROMAN_24, s.c_str());
+        glColor3f(1.0, 0.0, 0.0);
+        displayString(box_x + (120.0 / win_width), box_y + (30.0 / win_height), GLUT_BITMAP_HELVETICA_12, "Press [ENTER] to continue");
+        glEnable(GL_DEPTH_TEST);
 
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
+        glMatrixMode(GL_PROJECTION);
+        glPopMatrix();
+        glMatrixMode(GL_MODELVIEW);
+        glPopMatrix();}
+}
+
+void toggleAdjustAmbient()
+{
+    if(!show_help) // show only when user not reading help window
+        {
+            adjust_ambient = true;
+        }
 }
 
 void displayHelp()
 {
-    GLfloat box_w, box_h;
-    if(win_width >= START_WIDTH && win_height >= START_HEIGHT) // set to max size
-    {
-        box_w = HELP_MAX_WIDTH / win_width;
-        box_h = HELP_MAX_HEIGHT / win_height;
-    }
-    else // set to relative size
-    {
-        box_w = 0.8;
-        box_h = ( box_w * win_width * 2.0 ) / (win_height * 3.0);
-    }
-    GLfloat box_x = 0.5 - box_w * 0.5,
-            box_y = 0.5 - box_w * 0.5;
+    if(show_help)
+    {   
+        GLfloat box_w, box_h;
+        if(win_width >= START_WIDTH && win_height >= START_HEIGHT) // set to max size
+        {
+            box_w = HELP_MAX_WIDTH / win_width;
+            box_h = HELP_MAX_HEIGHT / win_height;
+        }
+        else // set to relative size
+        {
+            box_w = 0.8;
+            box_h = ( box_w * win_width * 2.0 ) / (win_height * 3.0);
+        }
+        GLfloat box_x = 0.5 - box_w * 0.5,
+                box_y = 0.5 - box_w * 0.5;
 
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    gluOrtho2D(0.0, 1.0, 0.0, 1.0);
+        glMatrixMode(GL_PROJECTION);
+        glPushMatrix();
+        glLoadIdentity();
+        gluOrtho2D(0.0, 1.0, 0.0, 1.0);
 
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glLoadIdentity();
 
-    glDisable(GL_LIGHTING);
-    glDisable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, textures[TEXTURE_HELP]);
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-    glColor4f(0.0, 0.0, 0.0, 0.7);
-    glBegin(GL_QUADS);
-    glTexCoord2f(0.0, 1.0);
-    glVertex2f(box_x, box_y);
-    glTexCoord2f(1.0, 1.0);
-    glVertex2f(box_x + box_w, box_y);
-    glTexCoord2f(1.0, 0.0);
-    glVertex2f(box_x + box_w, box_y + box_h);
-    glTexCoord2f(0.0, 0.0);
-    glVertex2f(box_x, box_y + box_h);
-    glEnd();
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    glDisable(GL_TEXTURE_2D);
-    glDisable(GL_BLEND);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_LIGHTING);
+        glDisable(GL_LIGHTING);
+        glDisable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, textures[TEXTURE_HELP]);
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+        glColor4f(0.0, 0.0, 0.0, 0.7);
+        glBegin(GL_QUADS);
+        glTexCoord2f(0.0, 1.0);
+        glVertex2f(box_x, box_y);
+        glTexCoord2f(1.0, 1.0);
+        glVertex2f(box_x + box_w, box_y);
+        glTexCoord2f(1.0, 0.0);
+        glVertex2f(box_x + box_w, box_y + box_h);
+        glTexCoord2f(0.0, 0.0);
+        glVertex2f(box_x, box_y + box_h);
+        glEnd();
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+        glDisable(GL_TEXTURE_2D);
+        glDisable(GL_BLEND);
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_LIGHTING);
 
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
+        glMatrixMode(GL_PROJECTION);
+        glPopMatrix();
+        glMatrixMode(GL_MODELVIEW);
+        glPopMatrix();}
+}
+
+void toggleHelp()
+{
+    show_help = !show_help;
 }
 
 void displayMovingMode()
@@ -1126,51 +1036,6 @@ void displayMovingMode()
     glPopMatrix();
 }
 
-void Display()
-{
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(fov, aspect, zNear, zFar);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    if(first_person)
-    {
-        gluLookAt(fpx0, fpy0, fpz0, fpxref, fpyref, fpzref, fpVx, fpVy, fpVz);
-        glRotatef(head_x_rotate, -1.0, 0.0, 0.0);
-        glRotatef(robot_y_rotate + head_y_rotate, 0.0, -1.0, 0.0);
-        glTranslatef(-robotx, 0.0, -robotz);
-    }
-    else
-    {
-        gluLookAt(cam_dist, cam_dist, cam_dist, xref, yref, zref, Vx, Vy, Vz);
-        glRotatef(world_rot, 0.0, 1.0, 0.0);
-    }
-    initLight();
-    displayfloor(FLOOR_SIZE);
-    displayWalls(FLOOR_SIZE, FLOOR_SIZE * 0.3);
-    displayTable(-TABLE_SIZEX * 0.5, FLOOR_SIZE * 0.5 - 20.0, TABLE_HEIGHT, TABLE_SIZEX, TABLE_SIZEZ, TABLE_THICKNESS);
-    displayTeapot(0.0, TABLE_HEIGHT + 2.0, FLOOR_SIZE * 0.5 - 15.0, 45.0);
-    displayChair(-CHAIR_SEAT_WIDTH * 0.5, FLOOR_SIZE * 0.5 - 20.0 - 2 * CHAIR_SEAT_DEPTH, TABLE_HEIGHT - 4.0, CHAIR_SEAT_WIDTH, CHAIR_SEAT_DEPTH, TABLE_THICKNESS);
-    displayFridge(-FLOOR_SIZE * 0.2, -FLOOR_SIZE * 0.5, FRIDGE_WIDTH, FRIDGE_HEIGHT, FRIDGE_DEPTH);
-    displayBin(-5.0, -FLOOR_SIZE * 0.5 + 5.0, 5.0, 5.0);
-    displayRobot();
-    displayMovingMode();
-    if(adjust_ambient)
-        displayAdjustAmbient();
-    if(show_help)
-        displayHelp();
-    glutSwapBuffers();
-}
-
-void Reshape(GLsizei w, GLsizei h)
-{
-    win_width = w;
-    win_height = h;
-    aspect = 1.0 * w / h;
-    glViewport(0, 0, win_width, win_height);
-}
-
 void HandleKeystrokes(unsigned char key)
 {
     if(adjust_ambient)
@@ -1183,7 +1048,7 @@ void HandleKeystrokes(unsigned char key)
 
         else if(key == KEY_ENTER)
         {
-            string s(user_input.begin(), user_input.end());
+            std::string s(user_input.begin(), user_input.end());
             sscanf(s.c_str(), "%f %f %f", &red, &green, &blue);
             red *= 0.01;
             green *= 0.01;
@@ -1449,50 +1314,4 @@ void SpecialKeyboard(int key, int x, int y)
         break;
     }
     glutPostRedisplay();
-}
-
-void Menu(int value)
-{
-    switch (value)
-    {
-    case 0:
-        if(!show_help) // show only when user not reading help window
-        {
-            adjust_ambient = true;
-            glutPostRedisplay();
-        }
-        break;
-
-    case 1:
-        show_help = !show_help;
-        glutPostRedisplay();
-        break;
-
-    case 2:
-        glutDestroyWindow(glutGetWindow());
-        break;
-    }
-}
-
-void RegisterCallbacks()
-{
-    glutDisplayFunc(Display);
-    glutReshapeFunc(Reshape);
-    glutKeyboardFunc(Keyboard);
-    glutSpecialFunc(SpecialKeyboard);
-}
-
-int main(int argc, char **argv)
-{
-    InitGlut(argc, argv);
-    Init();
-    RegisterCallbacks();
-
-    glutCreateMenu(Menu);
-    glutAddMenuEntry("Adjust ambient light", 0);
-    glutAddMenuEntry("help", 1);
-    glutAddMenuEntry("quit", 2);
-    glutAttachMenu(GLUT_RIGHT_BUTTON);
-
-    glutMainLoop();
 }
