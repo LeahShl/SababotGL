@@ -1207,8 +1207,10 @@ void SpecialKeyboard(int key, int x, int y)
     case GLUT_KEY_F3: // TOGGLE FIRST PERSON VIEW
         first_person = !first_person;
         if(first_person)
+        {
             mvstate = MOV_ROBOT;
             glutPostRedisplay();
+        }
         break;
 
     case GLUT_KEY_F4: // MOVE CAMERA
