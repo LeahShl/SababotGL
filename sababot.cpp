@@ -5,26 +5,29 @@
 #include <vector>
 using namespace std;
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-#define TEXTURE_MARBLE 0
-#define TEXTURE_WALL 1
-#define TEXTURE_WOOD 2
-#define TEXTURE_HELP 3
 #define START_WIDTH 1200
 #define START_HEIGHT 800
 #define HELP_MAX_WIDTH 960.0
 #define HELP_MAX_HEIGHT 640.0
 #define AMBIENT_BOX_W 400.0
 #define AMBIENT_BOX_H 200.0
+
 #define KEY_SPACE 32
 #define KEY_BACKSPACE 8
 #define KEY_ENTER 13
 #define KEY_ESC 27
+
 #define PI 3.14159265
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+#define TEXTURE_MARBLE 0
+#define TEXTURE_WALL 1
+#define TEXTURE_WOOD 2
+#define TEXTURE_HELP 3
 GLuint textures[5];
 
-GLint winWidth = START_WIDTH, winHeight = START_HEIGHT;
+GLint win_width = START_WIDTH, win_height = START_HEIGHT;
 GLfloat cam_dist = 50.0, world_rot = 0.0;
 GLfloat xref = 0.0, yref = 0.0, zref = 0.0;
 GLfloat Vx = 0.0, Vy = 1.0, Vz = 0.0;
@@ -39,7 +42,7 @@ GLfloat fpx0 = body_width * 0.5, fpy0 = body_height + neck_length, fpz0 = body_d
         fpxref = 0.0, fpyref = body_height + neck_length, fpzref = 100.0,
         fpVx = 0.0, fpVy = 1.0, fpVz = 0.0;
 
-GLfloat fov = 30.0, aspect = 1.0 * winWidth / winHeight, zNear = 1.0, zFar = 400.0;
+GLfloat fov = 30.0, aspect = 1.0 * win_width / win_height, zNear = 1.0, zFar = 400.0;
 GLfloat red = 0.5, green = 0.5, blue = 0.5;
 GLfloat light_x = 0.0, light_y = 60.0, light_z = 0.0;
 GLfloat light_xref = 0.0, light_yref = -1.0, light_zref = 0.0;
@@ -62,7 +65,7 @@ void InitGlut(int argc, char **argv)
 {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-    glutInitWindowSize(winWidth, winHeight);
+    glutInitWindowSize(win_width, win_height);
     glutCreateWindow("SababotGL");
 }
 
@@ -84,32 +87,45 @@ void initLight()
     glEnable(GL_LIGHT0);
 }
 
+void loadTexture(const char *filename, GLenum target, GLenum format, int nchannels)
+{
+    int width, height, nrChannels;
+    unsigned char *image = stbi_load(filename, &width, &height, &nrChannels, nchannels);
+    if (image)
+    {
+        if(target == GL_TEXTURE_2D)
+        {
+            glTexImage2D(target, 8, format, width, height, 1, format, GL_UNSIGNED_BYTE, image);
+            gluBuild2DMipmaps(target, format, width, height, format, GL_UNSIGNED_BYTE, image);
+        }
+        if(target == GL_TEXTURE_1D)
+        {
+            glTexImage1D(target, 8, format, width, 0, format, GL_UNSIGNED_BYTE, image);
+            gluBuild1DMipmaps(target, format, width, format, GL_UNSIGNED_BYTE, image);
+        }
+    }
+    else
+        cout << "ERROR loading texture \"" << filename << "\"\n";
+
+    stbi_image_free(image);
+}
+
 void initTextures()
 {
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     glGenTextures(5, textures);
+
     glBindTexture(GL_TEXTURE_2D, textures[TEXTURE_MARBLE]);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_MIPMAP);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    int width, height, nrChannels;
-    unsigned char *image = stbi_load("textures/marble.png", &width, &height, &nrChannels, 3);
-    if (image)
-    {
-        glTexImage2D(GL_TEXTURE_2D, 2, GL_RGB, width, height, 1, GL_RGB, GL_UNSIGNED_BYTE, image);
-        gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, width, height, GL_RGB, GL_UNSIGNED_BYTE, image);
-    }
+    loadTexture("textures/marble.png", GL_TEXTURE_2D, GL_RGB, 3);
+
     glBindTexture(GL_TEXTURE_1D, textures[TEXTURE_WALL]);
     glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_MIPMAP);
 
-    image = stbi_load("textures/wall1px.png", &width, &height, &nrChannels, 3);
-    if (image)
-    {
-        glTexImage1D(GL_TEXTURE_2D, 8, GL_RGB, width, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-        gluBuild1DMipmaps(GL_TEXTURE_1D, GL_RGB, width, GL_RGB, GL_UNSIGNED_BYTE, image);
-    }
+    loadTexture("textures/wall1px.png", GL_TEXTURE_1D, GL_RGB, 3);
 
     glBindTexture(GL_TEXTURE_2D, textures[TEXTURE_WOOD]);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -117,24 +133,12 @@ void initTextures()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_MIPMAP);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    image = stbi_load("textures/wood.png", &width, &height, &nrChannels, 3);
-    if (image)
-    {
-        glTexImage2D(GL_TEXTURE_2D, 8, GL_RGB, width, height, 1, GL_RGB, GL_UNSIGNED_BYTE, image);
-        gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, width, height, GL_RGB, GL_UNSIGNED_BYTE, image);
-    }
+    loadTexture("textures/wood.png", GL_TEXTURE_2D, GL_RGB, 3);
 
     glBindTexture(GL_TEXTURE_2D, textures[TEXTURE_HELP]);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_MIPMAP);
 
-    image = stbi_load("textures/help.png", &width, &height, &nrChannels, 4);
-    if (image)
-    {
-        glTexImage2D(GL_TEXTURE_2D, 8, GL_RGBA, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, image);
-        gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, width, height, GL_RGBA, GL_UNSIGNED_BYTE, image);
-    }
-
-    stbi_image_free(image);
+    loadTexture("textures/help.png", GL_TEXTURE_2D, GL_RGBA, 4);
 }
 
 void Init()
@@ -151,7 +155,6 @@ void Init()
     gluPerspective(fov, aspect, zNear, zFar);
     glMatrixMode(GL_MODELVIEW);
 
-    initLight();
     initTextures();
 }
 
@@ -551,7 +554,7 @@ void displayChair(float posx, float posz, float height, float seat_width, float 
 void displayFridge(float posx, float posz, float width, float height, float depth)
 {
     float door_split = height * 0.7;
-    int subdiv = 100;
+    int subdiv = 80;
 
     // Set material properties (chrome)
     GLfloat chrome_amb[] = {0.25, 0.25, 0.25, 1.0};
@@ -561,7 +564,7 @@ void displayFridge(float posx, float posz, float width, float height, float dept
     glMaterialfv(GL_FRONT, GL_DIFFUSE, chrome_diff);
     glMaterialfv(GL_FRONT, GL_SPECULAR, chrome_spec);
     glMaterialf(GL_FRONT, GL_SHININESS, 100.0);
-    glColor3f(0.5, 0.5, 0.5);
+    glColor3f(0.7, 0.7, 0.7);
 
     glPushMatrix();
     glTranslatef(posx, 0.0, posz);
@@ -573,6 +576,15 @@ void displayFridge(float posx, float posz, float width, float height, float dept
     rectCuboid2(width, door_split - 0.1, 1.0, subdiv); // lower door
     glTranslatef(0.0, door_split + 0.1, 0.0);
     rectCuboid2(width, height - door_split - 0.1, 1.0, subdiv); // upper door
+    glPopMatrix();
+}
+
+void displayBin(float posx, float posz, float width, float height)
+{
+    glPushMatrix();
+    glTranslatef(posx, 0.0, posz);
+    glRotatef(-90.0, 1.0, 0.0, 0.0);
+    gluCylinder(gluNewQuadric(), width * 0.8, width, height, 30.0, 30.0);
     glPopMatrix();
 }
 
@@ -923,9 +935,9 @@ void displayRobot()
     glColor3f(0.1, 0.1, 0.2);
     glMaterialf(GL_FRONT, GL_SHININESS, 128.0);
     glTranslatef(body_width * 0.1875, body_height * 0.1, -0.5);
-    gluSphere(gluNewQuadric(), 0.8, 10, 10);
+    gluSphere(gluNewQuadric(), 0.8, 30, 30);
     glTranslatef(-body_width * 0.375, 0.0, 0.0);
-    gluSphere(gluNewQuadric(), 0.8, 10, 10);
+    gluSphere(gluNewQuadric(), 0.8, 30, 30);
     glPopMatrix();
     glPopMatrix();
 
@@ -982,7 +994,7 @@ void displayString(float x, float y, void *font, const char *string)
 
 void displayAdjustAmbient()
 {
-    GLfloat box_w = AMBIENT_BOX_W / winWidth, box_h = AMBIENT_BOX_H / winHeight,
+    GLfloat box_w = AMBIENT_BOX_W / win_width, box_h = AMBIENT_BOX_H / win_height,
             box_x = 0.5 - box_w * 0.5,
             box_y = 0.5 - box_w * 0.5;
 
@@ -1009,11 +1021,11 @@ void displayAdjustAmbient()
     glDisable(GL_BLEND);
 
     glColor3f(1.0, 1.0, 1.0);
-    displayString(box_x + (30.0 / winWidth), box_y + box_h - (30.0 / winHeight), GLUT_BITMAP_HELVETICA_18, "Adjust ambient light");
-    displayString(box_x + (30.0 / winWidth), box_y + box_h - (48.0 / winHeight), GLUT_BITMAP_HELVETICA_12, "Enter 3 integers between 0-100 seperated by spaces");
-    displayString(box_x + (30.0 / winWidth), box_y + box_h - (100.0 / winHeight), GLUT_BITMAP_TIMES_ROMAN_24, s.c_str());
+    displayString(box_x + (30.0 / win_width), box_y + box_h - (30.0 / win_height), GLUT_BITMAP_HELVETICA_18, "Adjust ambient light");
+    displayString(box_x + (30.0 / win_width), box_y + box_h - (48.0 / win_height), GLUT_BITMAP_HELVETICA_12, "Enter 3 integers between 0-100 seperated by spaces");
+    displayString(box_x + (30.0 / win_width), box_y + box_h - (100.0 / win_height), GLUT_BITMAP_TIMES_ROMAN_24, s.c_str());
     glColor3f(1.0, 0.0, 0.0);
-    displayString(box_x + (120.0 / winWidth), box_y + (30.0 / winHeight), GLUT_BITMAP_HELVETICA_12, "Press [ENTER] to continue");
+    displayString(box_x + (120.0 / win_width), box_y + (30.0 / win_height), GLUT_BITMAP_HELVETICA_12, "Press [ENTER] to continue");
     glEnable(GL_DEPTH_TEST);
 
     glMatrixMode(GL_PROJECTION);
@@ -1025,15 +1037,15 @@ void displayAdjustAmbient()
 void displayHelp()
 {
     GLfloat box_w, box_h;
-    if(winWidth >= START_WIDTH && winHeight >= START_HEIGHT) // set to max size
+    if(win_width >= START_WIDTH && win_height >= START_HEIGHT) // set to max size
     {
-        box_w = HELP_MAX_WIDTH / winWidth;
-        box_h = HELP_MAX_HEIGHT / winHeight;
+        box_w = HELP_MAX_WIDTH / win_width;
+        box_h = HELP_MAX_HEIGHT / win_height;
     }
     else // set to relative size
     {
         box_w = 0.8;
-        box_h = ( box_w * winWidth * 2.0 ) / (winHeight * 3.0);
+        box_h = ( box_w * win_width * 2.0 ) / (win_height * 3.0);
     }
     GLfloat box_x = 0.5 - box_w * 0.5,
             box_y = 0.5 - box_w * 0.5;
@@ -1088,15 +1100,15 @@ void displayMovingMode()
     switch (mvstate)
     {
     case MOV_ROBOT:
-        displayString(5.0 / winWidth, 25.0 / winHeight, GLUT_BITMAP_TIMES_ROMAN_24, "Robot Mode");
+        displayString(5.0 / win_width, 25.0 / win_height, GLUT_BITMAP_TIMES_ROMAN_24, "Robot Mode");
         break;
     
     case MOV_CAM:
-        displayString(5.0 / winWidth, 25.0 / winHeight, GLUT_BITMAP_TIMES_ROMAN_24, "Camera Mode");
+        displayString(5.0 / win_width, 25.0 / win_height, GLUT_BITMAP_TIMES_ROMAN_24, "Camera Mode");
         break;
 
     case MOV_LIGHT:
-        displayString(5.0 / winWidth, 25.0 / winHeight, GLUT_BITMAP_TIMES_ROMAN_24, "Light Mode");
+        displayString(5.0 / win_width, 25.0 / win_height, GLUT_BITMAP_TIMES_ROMAN_24, "Light Mode");
         break;
     }
     glEnable(GL_DEPTH_TEST);
@@ -1127,15 +1139,13 @@ void Display()
         glRotatef(world_rot, 0.0, 1.0, 0.0);
     }
     initLight();
-    cout << "robotx: " << robotx << " robotz: " << robotz << "\n"
-         << "robotx > -50 " << (robotx > -50.0) << " robotz > -50 " << (robotz > -50.0) << "\n"
-         << "robotx < 50 " << (robotx < 50.0) << " robotz < 50 " << (robotz < 50.0) << "\n\n";
     displayfloor(100.0);
     displayWalls(100.0, 25.0);
     displayTable(-10.0, 30.0, 10.0, 20.0, 10.0, 1.0);
     displayTeapot(-10.0 + 10.0, 10.0 + 2.0, 30.0 + 5.0, 45.0);
     displayChair(-2.0, 20.0, 6.0, 6.0, 5.0, 1.0);
     displayFridge(-20.0, -50.0, 8.0, 24.0, 6.0);
+    displayBin(-5.0, -45.0, 2.5, 5.0);
     displayRobot();
     displayMovingMode();
     if(adjust_ambient)
@@ -1147,10 +1157,10 @@ void Display()
 
 void Reshape(GLsizei w, GLsizei h)
 {
-    winWidth = w;
-    winHeight = h;
+    win_width = w;
+    win_height = h;
     aspect = 1.0 * w / h;
-    glViewport(0, 0, winWidth, winHeight);
+    glViewport(0, 0, win_width, win_height);
 }
 
 void HandleKeystrokes(unsigned char key)
@@ -1343,18 +1353,16 @@ void SpecialKeyboard(int key, int x, int y)
             switch (key)
             {
             case GLUT_KEY_UP: // MOVE ROBOT FORWARD
-                cout << "sin: " << sin(robot_y_rotate * PI / 180.0) << " cos: " << cos(robot_y_rotate * PI / 180.0) << "\n";
-                if(robotx < 50.0 && robotx > -50.0)
+                if(robotx < 50.0)
                     robotx += 0.5 * sin(robot_y_rotate * PI / 180.0);
-                if(robotz < 50.0 && robotz > -50.0)
+                if(robotz < 50.0)
                     robotz += 0.5 * cos(robot_y_rotate * PI / 180.0);
                 break;
 
             case GLUT_KEY_DOWN: // MOVE ROBOT BACKWARDS
-                cout << "sin: " << sin(robot_y_rotate * PI / 180.0) << " cos: " << cos(robot_y_rotate * PI / 180.0) << "\n";
-                if(robotx < 50.0 && robotx > -50.0)
+                if(robotx > -50.0)
                     robotx += 0.5 * sin((180.0 + robot_y_rotate) * PI / 180.0);
-                if(robotz < 50.0 && robotz > -50.0)
+                if(robotz > -50.0)
                     robotz += 0.5 * cos((180.0 + robot_y_rotate) * PI / 180.0);
                 break;
 
