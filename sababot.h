@@ -45,6 +45,10 @@ const float FRIDGE_HEIGHT = 24.0;
 const float FRIDGE_DEPTH = 6.0;
 const float BIN_WIDTH = 5.0;
 const float BIN_HEIGHT = 5.0;
+const float ROBOT_BODY_WIDTH = 6.0;
+const float ROBOT_BODY_HEIGHT = 10.0;
+const float ROBOT_BODY_DEPTH = 3.0;
+const float ROBOT_NECK_LENGTH = 1.0;
 
 /**********************************
  **********  FUNCTIONS  ***********

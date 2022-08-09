@@ -7,40 +7,57 @@
 #include <iostream>
 #include <vector>
 
-int mvstate = MOV_ROBOT;
-int first_person = false;
-int adjust_ambient = false;
-int show_help = false;
+int mvstate = MOV_ROBOT;        // What am I moving right now?
+int first_person = false;       // Am I in first person mode?
+int adjust_ambient = false;     // Should I show adjust ambient box?
+int show_help = false;          // Should I show the help menu?
 
-GLuint textures[5];
+GLuint textures[4]; // Texture buffer
 
-GLint win_width = START_WIDTH, win_height = START_HEIGHT;
-GLfloat cam_dist = 50.0, world_rot = 0.0;
-GLfloat xref = 0.0, yref = 0.0, zref = 0.0;
-GLfloat Vx = 0.0, Vy = 1.0, Vz = 0.0;
-GLfloat fov = 30.0, aspect = 1.0 * win_width / win_height, zNear = 1.0, zFar = 400.0;
+GLint win_width = START_WIDTH,
+      win_height = START_HEIGHT;
 
-GLfloat robotx = 0.0, robotz = 0.0, robot_forward = 0.0, robot_y_rotate = 0.0;
-GLfloat head_x_rotate = 0.0, head_y_rotate = 0.0;
-GLfloat shoulder_x_rotate = 90.0, shoulder_y_rotate = -10.0;
-GLfloat elbow_x_rotate = -20.0, hand_y_rotate = 0.0;
-GLfloat body_width = 6.0, body_height = 10.0, body_depth = 3.0, neck_length = 1.0;
+// THIRD PERSON CAMERA
+GLfloat cam_dist = 50.0, world_rot = 0.0,
+        xref = 0.0, yref = 0.0, zref = 0.0,
+        Vx = 0.0, Vy = 1.0, Vz = 0.0;
 
-GLfloat fpx0 = body_width * 0.5, fpy0 = body_height + neck_length, fpz0 = body_depth + 0.9,
-        fpxref = 0.0, fpyref = body_height + neck_length, fpzref = 100.0,
+// FIRST PERSON CAMERA
+GLfloat fpx0 = ROBOT_BODY_WIDTH * 0.5, fpy0 = ROBOT_BODY_HEIGHT + ROBOT_NECK_LENGTH, fpz0 = ROBOT_BODY_DEPTH + 0.9,
+        fpxref = 0.0, fpyref = ROBOT_BODY_HEIGHT + ROBOT_NECK_LENGTH, fpzref = 100.0,
         fpVx = 0.0, fpVy = 1.0, fpVz = 0.0;
 
-GLfloat red = 0.5, green = 0.5, blue = 0.5;
-GLfloat light_x = 0.0, light_y = 60.0, light_z = 0.0;
-GLfloat light_xref = 0.0, light_yref = -1.0, light_zref = 0.0;
+// PERSPECTIVE PROJECTION
+GLfloat fov = 30.0, aspect = 1.0 * win_width / win_height, zNear = 1.0, zFar = 400.0;
 
-std::vector <char> user_input = {};
+// ROBOT MOVEMENT
+GLfloat robotx = 0.0, robotz = 0.0, robot_forward = 0.0, robot_y_rotate = 0.0,
+        head_x_rotate = 0.0, head_y_rotate = 0.0,
+        shoulder_x_rotate = 90.0, shoulder_y_rotate = -10.0,
+        elbow_x_rotate = -20.0, hand_y_rotate = 0.0;
 
+// LIGHT VARIABLES
+GLfloat red = 0.5, green = 0.5, blue = 0.5,
+        light_x = 0.0, light_y = 60.0, light_z = 0.0,
+        light_xref = 0.0, light_yref = -1.0, light_zref = 0.0;
+
+// Used for saving user input when in adjust ambient box
+std::vector <char> user_input = {}; 
+
+// The aspect is used to update frustum in initCamera()
 void updateWindowAspect(float new_aspect)
 {
     aspect = new_aspect;
 }
 
+// Loads a 1D/2D image texture to buffer using stb_image.h.
+// May fail for other reasons other than a file reading error. 
+// On a file reading error, the texture will not load and the 
+// objects which this texture has been applied to will be displayed 
+// with a solid color. Other errors may cause unexpected behaviour.
+// 
+// For 3 channel images use format=GL_RGB and nchannels=3.
+// For 4 channel images use format=GL_RGBA and nchannels=4.
 void loadTexture(const char *filename, GLenum target, GLenum format, int nchannels)
 {
     int width, height, nrChannels;
@@ -64,21 +81,22 @@ void loadTexture(const char *filename, GLenum target, GLenum format, int nchanne
     stbi_image_free(image);
 }
 
+// Loads 4 textures into the texture buffer using loadTexture().
+// Loading more than 4 textures will fail on some architectures,
+// delete previous textures or use a fragment shader in that case.
 void initTextures()
 {
-    glGenTextures(5, textures);
+    glGenTextures(4, textures);
 
     glBindTexture(GL_TEXTURE_2D, textures[TEXTURE_MARBLE]);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_MIPMAP);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
     loadTexture("textures/marble.png", GL_TEXTURE_2D, GL_RGB, 3);
 
     glBindTexture(GL_TEXTURE_1D, textures[TEXTURE_WALL]);
     glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_MIPMAP);
-
     loadTexture("textures/wall1px.png", GL_TEXTURE_1D, GL_RGB, 3);
 
     glBindTexture(GL_TEXTURE_2D, textures[TEXTURE_WOOD]);
@@ -86,15 +104,21 @@ void initTextures()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_MIPMAP);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
     loadTexture("textures/wood.png", GL_TEXTURE_2D, GL_RGB, 3);
 
     glBindTexture(GL_TEXTURE_2D, textures[TEXTURE_HELP]);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_MIPMAP);
-
     loadTexture("textures/help.png", GL_TEXTURE_2D, GL_RGBA, 4);
 }
 
+// Initializes frustum, camera and applies world transformations.
+//
+// In first person mode, the transformations applied are the reverse
+// transformation to the robot's movement, giving the user the feeling
+// that they see the world from the robot's eyes.
+// 
+// In third person mode, the camera is set at an equal distance from
+// each axis and rotated around the Y axis.
 void initCamera()
 {
     glMatrixMode(GL_PROJECTION);
@@ -798,45 +822,45 @@ void displayRobot()
 {
     glMaterialf(GL_FRONT, GL_SHININESS, 70.0);
     GLfloat arm_length = 3.0;
-    GLfloat arm_pos[3] = {0.0, body_height * (float)0.8, body_depth * (float)0.5};
+    GLfloat arm_pos[3] = {0.0, ROBOT_BODY_HEIGHT * (float)0.8, ROBOT_BODY_DEPTH * (float)0.5};
     glColor3f(0.6, 0.7, 1.0);
 
     glPushMatrix();
-    glTranslatef(robotx, body_depth * 0.5, robotz);
-    glTranslatef(body_width * 0.5, 0.0, body_depth * 0.5);
+    glTranslatef(robotx, ROBOT_BODY_DEPTH * 0.5, robotz);
+    glTranslatef(ROBOT_BODY_WIDTH * 0.5, 0.0, ROBOT_BODY_DEPTH * 0.5);
     glRotatef(robot_y_rotate, 0.0, 1.0, 0.0);
-    glTranslatef(-body_width * 0.5, 0.0, -body_depth * 0.5);
+    glTranslatef(-ROBOT_BODY_WIDTH * 0.5, 0.0, -ROBOT_BODY_DEPTH * 0.5);
     
 
     /* BODY */
     glPushMatrix();
-    rectCuboid(body_width, body_height, body_depth);
+    rectCuboid(ROBOT_BODY_WIDTH, ROBOT_BODY_HEIGHT, ROBOT_BODY_DEPTH);
     glPopMatrix();
 
     /* NECK */
     glPushMatrix();
-    glTranslatef(body_width / 2.0, body_height, body_depth / 2.0);
+    glTranslatef(ROBOT_BODY_WIDTH / 2.0, ROBOT_BODY_HEIGHT, ROBOT_BODY_DEPTH / 2.0);
     glRotatef(-90.0, 1.0, 0.0, 0.0);
-    gluCylinder(gluNewQuadric(), 0.9, 0.9, neck_length * 1.5, 10.0, 10.0);
+    gluCylinder(gluNewQuadric(), 0.9, 0.9, ROBOT_NECK_LENGTH * 1.5, 10.0, 10.0);
     glPopMatrix();
 
     /* HEAD */
     glPushMatrix();
-    glTranslatef(body_width * 0.625, body_height + neck_length, body_depth * 0.5);
+    glTranslatef(ROBOT_BODY_WIDTH * 0.625, ROBOT_BODY_HEIGHT + ROBOT_NECK_LENGTH, ROBOT_BODY_DEPTH * 0.5);
     glRotatef(head_x_rotate, 1.0, 0.0, 0.0);
     glRotatef(head_y_rotate, 0.0, 1.0, 0.0);
-    glTranslatef(-body_width * 0.5, 0.0, -body_depth * 0.5);
-    rectCuboid(body_width * 0.75, body_height * 0.4, body_depth);
+    glTranslatef(-ROBOT_BODY_WIDTH * 0.5, 0.0, -ROBOT_BODY_DEPTH * 0.5);
+    rectCuboid(ROBOT_BODY_WIDTH * 0.75, ROBOT_BODY_HEIGHT * 0.4, ROBOT_BODY_DEPTH);
 
     /* FACE */
     glPushMatrix();
-    glTranslatef(body_width * 0.375, body_height * 0.15, body_depth);
+    glTranslatef(ROBOT_BODY_WIDTH * 0.375, ROBOT_BODY_HEIGHT * 0.15, ROBOT_BODY_DEPTH);
     gluCylinder(gluNewQuadric(), 0.4, 0.1, 0.4, 10.0, 10.0);
     glColor3f(0.1, 0.1, 0.2);
     glMaterialf(GL_FRONT, GL_SHININESS, 128.0);
-    glTranslatef(body_width * 0.1875, body_height * 0.1, -0.5);
+    glTranslatef(ROBOT_BODY_WIDTH * 0.1875, ROBOT_BODY_HEIGHT * 0.1, -0.5);
     gluSphere(gluNewQuadric(), 0.8, 30, 30);
-    glTranslatef(-body_width * 0.375, 0.0, 0.0);
+    glTranslatef(-ROBOT_BODY_WIDTH * 0.375, 0.0, 0.0);
     gluSphere(gluNewQuadric(), 0.8, 30, 30);
     glPopMatrix();
     glPopMatrix();
@@ -845,11 +869,11 @@ void displayRobot()
     glColor3f(0.3, 0.3, 0.3); 
     glMaterialf(GL_FRONT, GL_SHININESS, 70.0);
     glPushMatrix();
-    glTranslatef(0.2, 0.0, body_depth * 0.5);
+    glTranslatef(0.2, 0.0, ROBOT_BODY_DEPTH * 0.5);
     glRotatef(90.0, 0.0, 1.0, 0.0);
-    gluCylinder(gluNewQuadric(), body_depth * 0.5, body_depth * 0.5, body_width * 0.25, 10.0, 10.0);
-    glTranslatef(0.0, 0.0, (body_width * 0.75) - 0.4);
-    gluCylinder(gluNewQuadric(), body_depth * 0.5, body_depth * 0.5, body_width * 0.25, 10.0, 10.0);
+    gluCylinder(gluNewQuadric(), ROBOT_BODY_DEPTH * 0.5, ROBOT_BODY_DEPTH * 0.5, ROBOT_BODY_WIDTH * 0.25, 10.0, 10.0);
+    glTranslatef(0.0, 0.0, (ROBOT_BODY_WIDTH * 0.75) - 0.4);
+    gluCylinder(gluNewQuadric(), ROBOT_BODY_DEPTH * 0.5, ROBOT_BODY_DEPTH * 0.5, ROBOT_BODY_WIDTH * 0.25, 10.0, 10.0);
     glPopMatrix();
     glColor3f(0.6, 0.7, 1.0);
 
