@@ -464,6 +464,7 @@ void displayTable(float posx, float posz, float height, float sizex, float sizez
     glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SINGLE_COLOR);
 }
 
+// Draws the chair using displayTable function to create the seat and legs.
 void displayChair(float posx, float posz, float height, float seat_width, float seat_depth, float thickness)
 {
     float chair_back_total_height = 7.0;
@@ -493,6 +494,9 @@ void displayChair(float posx, float posz, float height, float seat_width, float 
     glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SINGLE_COLOR);
 }
 
+// Uses a divided rectangular cuboid in order to get that stainless steel
+// shine. I took the material properties from the OpenGL red book example
+// for a chrome teapot and tweaked the numbers a bit.
 void displayFridge(float posx, float posz, float width, float height, float depth)
 {
     float door_split = height * 0.7;
@@ -521,6 +525,7 @@ void displayFridge(float posx, float posz, float width, float height, float dept
     glPopMatrix();
 }
 
+// This function only displays the garbag bin, without defining a material.
 void displayBin(float posx, float posz, float width, float height)
 {
     glPushMatrix();
@@ -530,9 +535,13 @@ void displayBin(float posx, float posz, float width, float height)
     glPopMatrix();
 }
 
+// Draws a Lego man style hand.
+// I wanted a Lego man style hand for the robot, but didn't have enough
+// time to do it properly. This is an .obj file converted to GL functions
+// by a Python script found on the internet. It doesn't parse texture 
+// coordinates or normals, unfortunately.
 void drawHand()
 {
-    glEnable(GL_AUTO_NORMAL);
     glBegin(GL_POLYGON);
     glVertex3d(-0.358546, 0.658333, 0.121825);
     glVertex3d(-0.070166, 0.314921, -0.003107);
@@ -833,93 +842,114 @@ void drawHand()
     glVertex3d(-0.086638, -0.287777, -0.057556);
     glVertex3d(0.188598, -0.140939, -0.083516);
     glEnd();
-    glDisable(GL_AUTO_NORMAL);
 }
+
 
 void displayRobot()
 {
-    glMaterialf(GL_FRONT, GL_SHININESS, 70.0);
-    GLfloat arm_length = 3.0;
-    GLfloat arm_pos[3] = {0.0, ROBOT_BODY_HEIGHT * (float)0.8, ROBOT_BODY_DEPTH * (float)0.5};
-    glColor3f(0.6, 0.7, 1.0);
+    // Sets material properties
+    glMaterialf(GL_FRONT, GL_SHININESS, 70.0f);
+    glColor3f(0.6f, 0.7f, 1.0f);
 
+    //////////// BODY ////////////
     glPushMatrix();
-    glTranslatef(robotx, ROBOT_BODY_DEPTH * 0.5, robotz);
-    glTranslatef(ROBOT_BODY_WIDTH * 0.5, 0.0, ROBOT_BODY_DEPTH * 0.5);
-    glRotatef(robot_y_rotate, 0.0, 1.0, 0.0);
-    glTranslatef(-ROBOT_BODY_WIDTH * 0.5, 0.0, -ROBOT_BODY_DEPTH * 0.5);
+    // Positions robot
+    glTranslatef(robotx, ROBOT_BODY_DEPTH * 0.5f, robotz);
+
+    // Rotates robot around itself
+    glTranslatef(ROBOT_BODY_WIDTH * 0.5f, 0.0f, ROBOT_BODY_DEPTH * 0.5f);
+    glRotatef(robot_y_rotate, 0.0f, 1.0f, 0.0f);
+    glTranslatef(-ROBOT_BODY_WIDTH * 0.5f, 0.0f, -ROBOT_BODY_DEPTH * 0.5f); 
     
-
-    /* BODY */
-    glPushMatrix();
     rectCuboid(ROBOT_BODY_WIDTH, ROBOT_BODY_HEIGHT, ROBOT_BODY_DEPTH);
-    glPopMatrix();
 
-    /* NECK */
+    //////////// NECK //////////// 
     glPushMatrix();
-    glTranslatef(ROBOT_BODY_WIDTH / 2.0, ROBOT_BODY_HEIGHT, ROBOT_BODY_DEPTH / 2.0);
-    glRotatef(-90.0, 1.0, 0.0, 0.0);
-    gluCylinder(gluNewQuadric(), 0.9, 0.9, ROBOT_NECK_LENGTH * 1.5, 10.0, 10.0);
-    glPopMatrix();
+    // Positions neck
+    glTranslatef(ROBOT_BODY_WIDTH / 2.0f, ROBOT_BODY_HEIGHT, ROBOT_BODY_DEPTH / 2.0f);
 
-    /* HEAD */
-    glPushMatrix();
-    glTranslatef(ROBOT_BODY_WIDTH * 0.625, ROBOT_BODY_HEIGHT + ROBOT_NECK_LENGTH, ROBOT_BODY_DEPTH * 0.5);
-    glRotatef(head_x_rotate, 1.0, 0.0, 0.0);
-    glRotatef(head_y_rotate, 0.0, 1.0, 0.0);
-    glTranslatef(-ROBOT_BODY_WIDTH * 0.5, 0.0, -ROBOT_BODY_DEPTH * 0.5);
-    rectCuboid(ROBOT_BODY_WIDTH * 0.75, ROBOT_BODY_HEIGHT * 0.4, ROBOT_BODY_DEPTH);
+    // Rotates neck because gluCylinder() draws them around z axis
+    glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
 
-    /* FACE */
+    gluCylinder(gluNewQuadric(), 0.9f, 0.9f, ROBOT_NECK_LENGTH * 1.5f, 10.0f, 10.0f);
+    glPopMatrix(); // neck
+
+    ///////////// HEAD ////////////
     glPushMatrix();
-    glTranslatef(ROBOT_BODY_WIDTH * 0.375, ROBOT_BODY_HEIGHT * 0.15, ROBOT_BODY_DEPTH);
-    gluCylinder(gluNewQuadric(), 0.4, 0.1, 0.4, 10.0, 10.0);
-    glColor3f(0.1, 0.1, 0.2);
-    glMaterialf(GL_FRONT, GL_SHININESS, 128.0);
-    glTranslatef(ROBOT_BODY_WIDTH * 0.1875, ROBOT_BODY_HEIGHT * 0.1, -0.5);
+    // Positions head
+    glTranslatef(ROBOT_BODY_WIDTH * 0.125f, ROBOT_BODY_HEIGHT + ROBOT_NECK_LENGTH, 0.0f);
+
+    // Pitch and yaw
+    glTranslatef(ROBOT_BODY_WIDTH * 0.5f, 0.0f, ROBOT_BODY_DEPTH * 0.5f);
+    glRotatef(head_x_rotate, 1.0f, 0.0f, 0.0f);
+    glRotatef(head_y_rotate, 0.0f, 1.0f, 0.0f);
+    glTranslatef(-ROBOT_BODY_WIDTH * 0.5f, 0.0f, -ROBOT_BODY_DEPTH * 0.5f);
+
+    rectCuboid(ROBOT_BODY_WIDTH * 0.75f, ROBOT_BODY_HEIGHT * 0.4f, ROBOT_BODY_DEPTH);
+
+    //////////// FACE ////////////
+    glPushMatrix();
+    // Nose
+    glTranslatef(ROBOT_BODY_WIDTH * 0.375f, ROBOT_BODY_HEIGHT * 0.15f, ROBOT_BODY_DEPTH);
+    gluCylinder(gluNewQuadric(), 0.4f, 0.1f, 0.4f, 10.0f, 10.0f);
+
+    // eyes
+    glColor3f(0.1f, 0.1f, 0.2f);
+    glMaterialf(GL_FRONT, GL_SHININESS, 128.0f);
+    glTranslatef(ROBOT_BODY_WIDTH * 0.1875f, ROBOT_BODY_HEIGHT * 0.1f, -0.5f);
     gluSphere(gluNewQuadric(), 0.8, 30, 30);
-    glTranslatef(-ROBOT_BODY_WIDTH * 0.375, 0.0, 0.0);
+    glTranslatef(-ROBOT_BODY_WIDTH * 0.375f, 0.0, 0.0);
     gluSphere(gluNewQuadric(), 0.8, 30, 30);
-    glPopMatrix();
-    glPopMatrix();
 
-    /* WHEELS */
-    glColor3f(0.3, 0.3, 0.3); 
-    glMaterialf(GL_FRONT, GL_SHININESS, 70.0);
+    glPopMatrix(); // face
+    glPopMatrix(); // head
+
+    //////////// WHEELS ////////////
     glPushMatrix();
-    glTranslatef(0.2, 0.0, ROBOT_BODY_DEPTH * 0.5);
-    glRotatef(90.0, 0.0, 1.0, 0.0);
-    gluCylinder(gluNewQuadric(), ROBOT_BODY_DEPTH * 0.5, ROBOT_BODY_DEPTH * 0.5, ROBOT_BODY_WIDTH * 0.25, 10.0, 10.0);
-    glTranslatef(0.0, 0.0, (ROBOT_BODY_WIDTH * 0.75) - 0.4);
-    gluCylinder(gluNewQuadric(), ROBOT_BODY_DEPTH * 0.5, ROBOT_BODY_DEPTH * 0.5, ROBOT_BODY_WIDTH * 0.25, 10.0, 10.0);
+    glColor3f(0.3f, 0.3f, 0.3f); 
+    glMaterialf(GL_FRONT, GL_SHININESS, 70.0f);
+    glTranslatef(0.2f, 0.0f, ROBOT_BODY_DEPTH * 0.5f);
+    glRotatef(90.0f, 0.0f, 1.0f, 0.0f);
+    gluCylinder(gluNewQuadric(), ROBOT_BODY_DEPTH * 0.5, ROBOT_BODY_DEPTH * 0.5, ROBOT_BODY_WIDTH * 0.25, 30, 30);
+    glTranslatef(0.0f, 0.0f, (ROBOT_BODY_WIDTH * 0.75f) - 0.4f);
+    gluCylinder(gluNewQuadric(), ROBOT_BODY_DEPTH * 0.5, ROBOT_BODY_DEPTH * 0.5, ROBOT_BODY_WIDTH * 0.25, 30, 30);
     glPopMatrix();
-    glColor3f(0.6, 0.7, 1.0);
+    glColor3f(0.6f, 0.7f, 1.0f);
 
-    glPushMatrix(); // arm
-    glTranslatef(arm_pos[0], arm_pos[1], arm_pos[2]);
-    gluSphere(gluNewQuadric(), 0.7, 10, 10);
-    glRotatef(shoulder_x_rotate, 1.0, 0.0, 0.0);
-    glRotatef(shoulder_y_rotate, 0.0, 1.0, 0.0);
-    glPushMatrix(); // upper arm
-    gluCylinder(gluNewQuadric(), 0.7, 0.7, arm_length, 10.0, 10.0);
-    glTranslatef(0.0, 0.0, arm_length);
+    //////////// SHOULDER ////////////
+    glPushMatrix(); 
+    // Positions shoulder
+    glTranslatef(0.0f, ROBOT_BODY_HEIGHT * 0.8f, ROBOT_BODY_DEPTH * 0.5f);
+    // Rotates shoulder
+    glRotatef(shoulder_x_rotate, 1.0f, 0.0f, 0.0f);
+    glRotatef(shoulder_y_rotate, 0.0f, 1.0f, 0.0f);
+
     gluSphere(gluNewQuadric(), 0.7, 10, 10);
 
-    glPushMatrix(); // lower arm
-    glRotatef(elbow_x_rotate, 1.0, 0.0, 0.0);
-    gluCylinder(gluNewQuadric(), 0.7, 0.5, arm_length, 10.0, 10.0);
-    glTranslatef(0.0, 0.0, arm_length);
+    //////////// UPPER ARM ////////////
+    glPushMatrix(); 
+    gluCylinder(gluNewQuadric(), 0.7, 0.7, ROBOT_ARM_LENGTH, 10, 10);
+    // Elbow
+    glTranslatef(0.0f, 0.0f, ROBOT_ARM_LENGTH);
+    gluSphere(gluNewQuadric(), 0.7, 10, 10);
+
+    //////////// LOWER ARM ////////////
+    glPushMatrix(); 
+    glRotatef(elbow_x_rotate, 1.0f, 0.0f, 0.0f);
+    gluCylinder(gluNewQuadric(), 0.7, 0.5, ROBOT_ARM_LENGTH, 10, 10);
+    glTranslatef(0.0f, 0.0f, ROBOT_ARM_LENGTH);
     gluSphere(gluNewQuadric(), 0.5, 10, 10);
 
+    //////////// HAND ////////////
     glPushMatrix();
-    glRotatef(hand_y_rotate, 0.0, 0.0, 1.0);
-    glColor3f(0.1, 0.1, 0.1);
+    glRotatef(hand_y_rotate, 0.0f, 0.0f, 1.0f);
+    glColor3f(0.1f, 0.1f, 0.1f);
     drawHand();
 
     glPopMatrix(); // hand
     glPopMatrix(); // lower arm
     glPopMatrix(); // upper arm
-    glPopMatrix(); // arm
+    glPopMatrix(); // shoulder
     glPopMatrix(); // body
 }
 

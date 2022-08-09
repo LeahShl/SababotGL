@@ -49,6 +49,7 @@ const float ROBOT_BODY_WIDTH = 6.0;
 const float ROBOT_BODY_HEIGHT = 10.0;
 const float ROBOT_BODY_DEPTH = 3.0;
 const float ROBOT_NECK_LENGTH = 1.0;
+const float ROBOT_ARM_LENGTH = 3.0;
 
 /**********************************
  **********  FUNCTIONS  ***********
