@@ -140,6 +140,11 @@ void initCamera()
     }
 }
 
+// Initializes a single positional light source.
+// All objects have a baseline of ambient and diffuse lighting, but some
+// objects have special material properties that are declared seperately.
+// The light source has a spotlight cutoff in order to see the effect
+// of changing the light's direction. 
 void initLight()
 {
     GLfloat white_light[] = {1.0, 1.0, 1.0, 0.0};
@@ -162,7 +167,7 @@ void displayfloor(float size)
 {
     // Set material properties
     glMateriali(GL_FRONT, GL_SHININESS, 128);
-    glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
+    glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR); // makes it even shinier
 
     // Draw floor
     glPushMatrix();
@@ -172,6 +177,7 @@ void displayfloor(float size)
     glBindTexture(GL_TEXTURE_2D, textures[TEXTURE_MARBLE]);
     glBegin(GL_QUADS);
     glNormal3f(0.0, 1.0, 0.0);
+    // Dividing the floor into smaller quads lets the floor REALLY shine.
     int subdiv = 42;
     float texrepeat = subdiv / 4.0;
     for(int i=0; i<subdiv; i++)
@@ -191,9 +197,15 @@ void displayfloor(float size)
     glEnd();
     glDisable(GL_TEXTURE_2D);
     glPopMatrix();
-    glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SINGLE_COLOR);
+    glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SINGLE_COLOR); // back to default
 }
 
+// The walls are displayed based on camera position.
+// 
+// In first person mode, all walls are displayed.
+// In third person mode, only the two walls opposite to the camera are
+// displayed. The walls to be displayed can be easily determined by the
+// camera's angle of rotation around the Y axis.
 void displayWalls(float size, float height)
 {
     // Set material properties
@@ -201,11 +213,13 @@ void displayWalls(float size, float height)
     glEnable(GL_TEXTURE_1D);
     glBindTexture(GL_TEXTURE_1D, textures[TEXTURE_WALL]);
 
-    // Draw walls
+    // This is the actual position of the camera, given that the initial
+    // camera position is at equal spaces from each axis.
     float camera_pos = world_rot - 45.0;
+
     if(first_person || cos(camera_pos * PI / 180.0) >= 0.0)
     {
-        // draw fridge wall
+        // draw -Z wall (fridge side)
         glPushMatrix();
         glBegin(GL_QUADS);
         glTexCoord1f(0.0);
@@ -221,7 +235,7 @@ void displayWalls(float size, float height)
     }
     if(first_person || cos(camera_pos * PI / 180.0) <= 0.0)
     {
-        // draw table wall
+        // draw +Z wall (table side)
         glPushMatrix();
         glBegin(GL_QUADS);
         glTexCoord1f(0.0);
@@ -237,7 +251,7 @@ void displayWalls(float size, float height)
     }
     if(first_person || sin(camera_pos * PI / 180.0) >= 0.0)
     {
-        // draw no-arm-side wall
+        // draw +X wall (no arm side)
         glPushMatrix();
         glBegin(GL_QUADS);
         glTexCoord1f(0.0);
@@ -253,7 +267,7 @@ void displayWalls(float size, float height)
     }
     if(first_person || sin(camera_pos * PI / 180.0) <= 0.0)
     {
-        // draw arm-side wall
+        // draw -X wall (arm side)
         glPushMatrix();
         glBegin(GL_QUADS);
         glTexCoord1f(0.0);
@@ -270,6 +284,10 @@ void displayWalls(float size, float height)
     glDisable(GL_TEXTURE_1D);
 }
 
+// Displays a subdivided rectangular cuboid where each face is subdivided
+// into subdiv*subdiv quads.
+// This allows for more accurate illumination calculations for each face.
+// The more subdivitions, the more fine grained and realistic the final result.
 void rectCuboidDiv(float x, float y, float z, int subdiv)
 {
     // Top face
