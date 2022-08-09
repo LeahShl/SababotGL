@@ -227,27 +227,27 @@ void toggleHelp();
 void displayMovingMode();
 
 /**
- * @brief Parses user's keyboard input
+ * @brief Saves user's keyboard input for ambient light adjusment
  * 
- * @param key 
+ * @param key The key that was typed
  */
 void HandleKeystrokes(unsigned char key);
 
 /**
- * @brief 
+ * @brief Keyboard callback function (ASCII characters)
  * 
- * @param key 
- * @param x 
- * @param y 
+ * @param key The key that was typed
+ * @param x Mouse x
+ * @param y Mouse y
  */
 void Keyboard(unsigned char key, int x, int y);
 
 /**
- * @brief 
+ * @brief Special keyboard callback function (non-ASCII characters)
  * 
- * @param key 
- * @param x 
- * @param y 
+ * @param key The key that was typed
+ * @param x Mouse x
+ * @param y Mouse y
  */
 void SpecialKeyboard(int key, int x, int y);
 
