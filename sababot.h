@@ -51,183 +51,183 @@ const float BIN_HEIGHT = 5.0;
  **********************************/
 
 /**
- * @brief 
+ * @brief Sets new aspect ratio for the frustum
  * 
- * @param new_aspect 
+ * @param new_aspect The new aspect ratio to be set (width/height)
  */
 void updateWindowAspect(float new_aspect);
 
 /**
- * @brief 
+ * @brief Loads a 1D/2D image texture to a target
  * 
- * @param filename 
- * @param target 
- * @param format 
- * @param nchannels 
+ * @param filename Path to file
+ * @param target Either GL_TEXTURE_1D or GL_TEXTURE_2D
+ * @param format Either GL_RGB or GL_RGBA
+ * @param nchannels Should be 3 or 4 according to format
  */
 void loadTexture(const char *filename, GLenum target, GLenum format, int nchannels);
 
 /**
- * @brief 
+ * @brief Initializes textures and loads them to buffer
  * 
  */
 void initTextures();
 
 /**
- * @brief 
+ * @brief Initializes camera 
  * 
  */
 void initCamera();
 
 /**
- * @brief 
+ * @brief Initializes light source
  * 
  */
 void initLight();
 
 /**
- * @brief 
+ * @brief Displays a marble floor on the XZ plane
  * 
- * @param size 
+ * @param size The floor size
  */
 void displayfloor(float size);
 
 /**
- * @brief 
+ * @brief Displays textured walls with respect to camera position
  * 
- * @param size 
- * @param height 
+ * @param size The floor size
+ * @param height Wall's height
  */
 void displayWalls(float size, float height);
 
 /**
- * @brief 
+ * @brief Displays a rectangular cuboid divided into smaller quads
  * 
- * @param x 
- * @param y 
- * @param z 
- * @param subdiv 
+ * @param x Size along the X axis
+ * @param y Size along the Y axis
+ * @param z Size along the Z axis
+ * @param subdiv Degree of subdivision
  */
 void rectCuboidDiv(float x, float y, float z, int subdiv);
 
 /**
- * @brief 
+ * @brief Displays a basic rectangular cuboid of 6 quads
  * 
- * @param x 
- * @param y 
- * @param z 
+ * @param x Size along the X axis
+ * @param y Size along the Y axis
+ * @param z Size along the Z axis
  */
 void rectCuboid(float x, float y, float z);
 
 /**
- * @brief 
+ * @brief Displays a ceramic GLUT teapot of a fixed size
  * 
- * @param x 
- * @param y 
- * @param z 
- * @param rot 
+ * @param x X axis position
+ * @param y Y axis position
+ * @param z Z axis position
+ * @param rot Degree of rotation along the Y axis
  */
 void displayTeapot(float x, float y, float z, float rot);
 
 /**
- * @brief 
+ * @brief Displays a wooden table
  * 
- * @param posx 
- * @param posz 
- * @param height 
- * @param sizex 
- * @param sizez 
- * @param thickness 
+ * @param posx X axis position
+ * @param posz Y axis position
+ * @param height Table height
+ * @param sizex Size along the X axis
+ * @param sizez Size along the Z axis
+ * @param thickness Tabletop thickness
  */
 void displayTable(float posx, float posz, float height, float sizex, float sizez, float thickness);
 
 /**
- * @brief 
+ * @brief Displays a wooden chair
  * 
- * @param posx 
- * @param posz 
- * @param height 
- * @param seat_width 
- * @param seat_depth 
- * @param thickness 
+ * @param posx X axis position
+ * @param posz Z axis position
+ * @param height Seat height 
+ * @param seat_width Seat width
+ * @param seat_depth Seat height
+ * @param thickness Seat thickness
  */
 void displayChair(float posx, float posz, float height, float seat_width, float seat_depth, float thickness);
 
 /**
- * @brief 
+ * @brief Displays a stainless steel fridge
  * 
- * @param posx 
- * @param posz 
- * @param width 
- * @param height 
- * @param depth 
+ * @param posx X axis position
+ * @param posz Z axis position
+ * @param width Fridge width
+ * @param height Fridge height
+ * @param depth Fridge depth
  */
 void displayFridge(float posx, float posz, float width, float height, float depth);
 
 /**
- * @brief 
+ * @brief Displays a stainless steel garbage bin
  * 
- * @param posx 
- * @param posz 
- * @param width 
- * @param height 
+ * @param posx X axis position
+ * @param posz Z axis position
+ * @param width Bin width
+ * @param height Bin height
  */
 void displayBin(float posx, float posz, float width, float height);
 
 /**
- * @brief 
+ * @brief Displays a Lego man style hand
  * 
  */
 void drawHand();
 
 /**
- * @brief 
+ * @brief Displays Sababot
  * 
  */
 void displayRobot();
 
 /**
- * @brief 
+ * @brief Displays a floating string on the screen using 2D projection. 
  * 
- * @param x 
- * @param y 
- * @param font 
- * @param string 
+ * @param x X axis position
+ * @param y Y axis position
+ * @param font GLUT bitmap font pointer
+ * @param string The string to display
  */
 void displayString(float x, float y, void *font, const char *string);
 
 /**
- * @brief 
+ * @brief Displays adjust ambient box when adjust_ambient=true
  * 
  */
 void displayAdjustAmbient();
 
 /**
- * @brief 
+ * @brief Sets on adjust_ambient flag
  * 
  */
 void toggleAdjustAmbient();
 
 /**
- * @brief 
+ * @brief Displays help menu when show_help=true
  * 
  */
 void displayHelp();
 
 /**
- * @brief 
+ * @brief Toggles show_help flag on/off
  * 
  */
 void toggleHelp();
 
 /**
- * @brief 
+ * @brief Displays the type of moving mode (robot, camera, light) on the top left corner
  * 
  */
 void displayMovingMode();
 
 /**
- * @brief 
+ * @brief Parses user's keyboard input
  * 
  * @param key 
  */

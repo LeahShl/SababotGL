@@ -59,7 +59,7 @@ void loadTexture(const char *filename, GLenum target, GLenum format, int nchanne
         }
     }
     else
-        std::cout << "ERROR loading texture \"" << filename << "\"\n";
+        std::cout << "ERROR reading texture file \"" << filename << "\"\n";
 
     stbi_image_free(image);
 }
