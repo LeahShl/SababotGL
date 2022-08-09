@@ -7,7 +7,7 @@
 #include <GL/glu.h>
 #include <GL/glut.h>
 
-/*
+/**
  * Initializes window, sets some defaults and loads textures to buffer.
  * To be called from the main function.
  */
@@ -26,7 +26,7 @@ void Init(int argc, char **argv)
     initTextures();
 }
 
-/*
+/**
  * Display callback function
  */
 void Display()
@@ -65,7 +65,7 @@ void Display()
     glutSwapBuffers();
 }
 
-/*
+/**
  * Reshape callback function
  */
 void Reshape(GLsizei w, GLsizei h)
@@ -74,7 +74,7 @@ void Reshape(GLsizei w, GLsizei h)
     glViewport(0, 0, w, h);
 }
 
-/*
+/**
  * Right-click menu
  */
 void Menu(int value)
