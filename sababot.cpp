@@ -129,14 +129,14 @@ void initCamera()
     if(first_person)
     {
         gluLookAt(fpx0, fpy0, fpz0, fpxref, fpyref, fpzref, fpVx, fpVy, fpVz);
-        glRotatef(head_x_rotate, -1.0, 0.0, 0.0);
-        glRotatef(robot_y_rotate + head_y_rotate, 0.0, -1.0, 0.0);
-        glTranslatef(-robotx, 0.0, -robotz);
+        glRotatef(head_x_rotate, -1.0f, 0.0f, 0.0f);
+        glRotatef(robot_y_rotate + head_y_rotate, 0.0f, -1.0f, 0.0f);
+        glTranslatef(-robotx, 0.0f, -robotz);
     }
     else
     {
         gluLookAt(cam_dist, cam_dist, cam_dist, xref, yref, zref, Vx, Vy, Vz);
-        glRotatef(world_rot, 0.0, 1.0, 0.0);
+        glRotatef(world_rot, 0.0f, 1.0f, 0.0f);
     }
 }
 
@@ -147,14 +147,14 @@ void initCamera()
 // of changing the light's direction. 
 void initLight()
 {
-    GLfloat white_light[] = {1.0, 1.0, 1.0, 0.0};
-    GLfloat light_position[] = {light_x, light_y, light_z, 1.0};
-    GLfloat lmodel_ambient[] = {red, green, blue, 1.0};
+    GLfloat white_light[] = {1.0f, 1.0f, 1.0f, 0.0f};
+    GLfloat light_position[] = {light_x, light_y, light_z, 1.0f};
+    GLfloat lmodel_ambient[] = {red, green, blue, 1.0f};
     GLfloat light_direction[] = {light_xref, light_yref, light_zref};
     glLightfv(GL_LIGHT0, GL_DIFFUSE, white_light);
     glLightfv(GL_LIGHT0, GL_SPECULAR, white_light);
     glLightfv(GL_LIGHT0, GL_POSITION, light_position);
-    glLightf(GL_LIGHT0, GL_SPOT_CUTOFF, 90.0);
+    glLightf(GL_LIGHT0, GL_SPOT_CUTOFF, 90.0f);
     glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, light_direction);
     glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
     glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
@@ -171,27 +171,27 @@ void displayfloor(float size)
 
     // Draw floor
     glPushMatrix();
-    glTranslatef(-size / 2, 0.0, -size / 2);
-    glColor3f(1.0, 1.0, 1.0);
+    glTranslatef(-size / 2.0f, 0.0f, -size / 2.0f);
+    glColor3f(1.0f, 1.0f, 1.0f);
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, textures[TEXTURE_MARBLE]);
     glBegin(GL_QUADS);
-    glNormal3f(0.0, 1.0, 0.0);
+    glNormal3f(0.0f, 1.0f, 0.0f);
     // Dividing the floor into smaller quads lets the floor REALLY shine.
     int subdiv = 42;
-    float texrepeat = subdiv / 4.0;
+    float texrepeat = subdiv / 4.0f;
     for(int i=0; i<subdiv; i++)
     {
         for(int j=0; j<subdiv; j++)
         {
             glTexCoord2f(i / texrepeat, j / texrepeat);
-            glVertex3f(size * i / subdiv, 0.0, size * j / subdiv);
-            glTexCoord2f(i / texrepeat, (j + 1.0) / texrepeat);
-            glVertex3f(size * i / subdiv, 0.0, size * (j + 1.0) / subdiv);
-            glTexCoord2f((i + 1.0) / texrepeat, (j + 1.0) / texrepeat);
-            glVertex3f(size * (i + 1.0) / subdiv, 0.0, size * (j + 1.0) / subdiv);
-            glTexCoord2f((i + 1.0) / texrepeat, j / texrepeat);
-            glVertex3f(size * (i + 1.0) / subdiv, 0.0, size * j / subdiv);
+            glVertex3f(size * i / subdiv, 0.0f, size * j / subdiv);
+            glTexCoord2f(i / texrepeat, (j + 1.0f) / texrepeat);
+            glVertex3f(size * i / subdiv, 0.0f, size * (j + 1.0f) / subdiv);
+            glTexCoord2f((i + 1.0f) / texrepeat, (j + 1.0f) / texrepeat);
+            glVertex3f(size * (i + 1.0f) / subdiv, 0.0f, size * (j + 1.0f) / subdiv);
+            glTexCoord2f((i + 1.0f) / texrepeat, j / texrepeat);
+            glVertex3f(size * (i + 1.0f) / subdiv, 0.0f, size * j / subdiv);
         }
     }
     glEnd();
@@ -209,27 +209,27 @@ void displayfloor(float size)
 void displayWalls(float size, float height)
 {
     // Set material properties
-    glColor3f(1.0, 1.0, 1.0);
+    glColor3f(1.0f, 1.0f, 1.0f);
     glEnable(GL_TEXTURE_1D);
     glBindTexture(GL_TEXTURE_1D, textures[TEXTURE_WALL]);
 
     // This is the actual position of the camera, given that the initial
     // camera position is at equal spaces from each axis.
-    float camera_pos = world_rot - 45.0;
+    float camera_pos = world_rot - 45.0f;
 
     if(first_person || cos(camera_pos * PI / 180.0) >= 0.0)
     {
         // draw -Z wall (fridge side)
         glPushMatrix();
         glBegin(GL_QUADS);
-        glTexCoord1f(0.0);
-        glVertex3f(-size * 0.5, height, -size * 0.5);
-        glTexCoord1f(1.0);
-        glVertex3f(size * 0.5, height, -size * 0.5);
-        glTexCoord1f(1.0);
-        glVertex3f(size * 0.5, 0.0, -size * 0.5);
-        glTexCoord1f(0.0);
-        glVertex3f(-size * 0.5, 0.0, -size * 0.5);
+        glTexCoord1f(0.0f);
+        glVertex3f(-size * 0.5f, height, -size * 0.5f);
+        glTexCoord1f(1.0f);
+        glVertex3f(size * 0.5f, height, -size * 0.5f);
+        glTexCoord1f(1.0f);
+        glVertex3f(size * 0.5f, 0.0f, -size * 0.5f);
+        glTexCoord1f(0.0f);
+        glVertex3f(-size * 0.5f, 0.0f, -size * 0.5f);
         glEnd();
         glPopMatrix();
     }
@@ -238,14 +238,14 @@ void displayWalls(float size, float height)
         // draw +Z wall (table side)
         glPushMatrix();
         glBegin(GL_QUADS);
-        glTexCoord1f(0.0);
-        glVertex3f(-size * 0.5, height, size * 0.5);
-        glTexCoord1f(1.0);
-        glVertex3f(size * 0.5, height, size * 0.5);
-        glTexCoord1f(1.0);
-        glVertex3f(size * 0.5, 0.0, size * 0.5);
-        glTexCoord1f(0.0);
-        glVertex3f(-size * 0.5, 0.0, size * 0.5);
+        glTexCoord1f(0.0f);
+        glVertex3f(-size * 0.5f, height, size * 0.5f);
+        glTexCoord1f(1.0f);
+        glVertex3f(size * 0.5f, height, size * 0.5f);
+        glTexCoord1f(1.0f);
+        glVertex3f(size * 0.5f, 0.0f, size * 0.5f);
+        glTexCoord1f(0.0f);
+        glVertex3f(-size * 0.5f, 0.0f, size * 0.5f);
         glEnd();
         glPopMatrix();
     }
@@ -254,14 +254,14 @@ void displayWalls(float size, float height)
         // draw +X wall (no arm side)
         glPushMatrix();
         glBegin(GL_QUADS);
-        glTexCoord1f(0.0);
-        glVertex3f(size * 0.5, height, size * 0.5);
-        glTexCoord1f(1.0);
-        glVertex3f(size * 0.5, height, -size * 0.5);
-        glTexCoord1f(1.0);
-        glVertex3f(size * 0.5, 0.0, -size * 0.5);
-        glTexCoord1f(0.0);
-        glVertex3f(size * 0.5, 0.0, size * 0.5);
+        glTexCoord1f(0.0f);
+        glVertex3f(size * 0.5f, height, size * 0.5f);
+        glTexCoord1f(1.0f);
+        glVertex3f(size * 0.5f, height, -size * 0.5f);
+        glTexCoord1f(1.0f);
+        glVertex3f(size * 0.5f, 0.0f, -size * 0.5f);
+        glTexCoord1f(0.0f);
+        glVertex3f(size * 0.5f, 0.0f, size * 0.5f);
         glEnd();
         glPopMatrix();
     }
@@ -270,14 +270,14 @@ void displayWalls(float size, float height)
         // draw -X wall (arm side)
         glPushMatrix();
         glBegin(GL_QUADS);
-        glTexCoord1f(0.0);
-        glVertex3f(-size * 0.5, height, size * 0.5);
-        glTexCoord1f(1.0);
-        glVertex3f(-size * 0.5, height, -size * 0.5);
-        glTexCoord1f(1.0);
-        glVertex3f(-size * 0.5, 0.0, -size * 0.5);
-        glTexCoord1f(0.0);
-        glVertex3f(-size * 0.5, 0.0, size * 0.5);
+        glTexCoord1f(0.0f);
+        glVertex3f(-size * 0.5f, height, size * 0.5f);
+        glTexCoord1f(1.0f);
+        glVertex3f(-size * 0.5f, height, -size * 0.5f);
+        glTexCoord1f(1.0f);
+        glVertex3f(-size * 0.5f, 0.0f, -size * 0.5f);
+        glTexCoord1f(0.0f);
+        glVertex3f(-size * 0.5f, 0.0f, size * 0.5f);
         glEnd();
         glPopMatrix();
     }
@@ -292,114 +292,114 @@ void rectCuboidDiv(float x, float y, float z, int subdiv)
 {
     // Top face
     glBegin(GL_QUADS);
-    glNormal3f(0.0, 1.0, 0.0);
+    glNormal3f(0.0f, 1.0f, 0.0f);
     for(int i=0; i<subdiv; i++)
     {
         for(int j=0; j<subdiv; j++)
         {
             glTexCoord2f(i, j);
             glVertex3f(x * i / subdiv, y, z * j / subdiv);
-            glTexCoord2f(i + 1.0, j);
-            glVertex3f(x * (i + 1.0) / subdiv, y, z * j / subdiv);
-            glTexCoord2f(i + 1.0, j + 1.0);
-            glVertex3f(x * (i + 1.0) / subdiv, y, z * (j + 1.0) / subdiv);
-            glTexCoord2f(i, j + 1.0);
-            glVertex3f(x * i / subdiv, y, z * (j + 1.0) / subdiv);
+            glTexCoord2f(i + 1.0f, j);
+            glVertex3f(x * (i + 1.0f) / subdiv, y, z * j / subdiv);
+            glTexCoord2f(i + 1.0f, j + 1.0f);
+            glVertex3f(x * (i + 1.0f) / subdiv, y, z * (j + 1.0f) / subdiv);
+            glTexCoord2f(i, j + 1.0f);
+            glVertex3f(x * i / subdiv, y, z * (j + 1.0f) / subdiv);
         }
     }
     glEnd();
 
     // Side face 1
     glBegin(GL_QUADS);
-    glNormal3f(-1.0, 0.0, 0.0);
+    glNormal3f(-1.0f, 0.0f, 0.0f);
     for(int i=0; i<subdiv; i++)
     {
         for(int j=0; j<subdiv; j++)
         {
             glTexCoord2f(i, j);
-            glVertex3f(0.0, y * i / subdiv, z * j / subdiv);
-            glTexCoord2f(i + 1.0, j);
-            glVertex3f(0.0, y * (i + 1.0) / subdiv, z * j / subdiv);
-            glTexCoord2f(i + 1.0, j + 1.0);
-            glVertex3f(0.0, y * (i + 1.0) / subdiv, z * (j + 1.0) / subdiv);
-            glTexCoord2f(i, j + 1.0);
-            glVertex3f(0.0, y * i / subdiv, z * (j + 1.0) / subdiv);
+            glVertex3f(0.0f, y * i / subdiv, z * j / subdiv);
+            glTexCoord2f(i + 1.0f, j);
+            glVertex3f(0.0f, y * (i + 1.0f) / subdiv, z * j / subdiv);
+            glTexCoord2f(i + 1.0f, j + 1.0f);
+            glVertex3f(0.0f, y * (i + 1.0f) / subdiv, z * (j + 1.0f) / subdiv);
+            glTexCoord2f(i, j + 1.0f);
+            glVertex3f(0.0f, y * i / subdiv, z * (j + 1.0f) / subdiv);
         }
     }
     glEnd();
 
     // Side face 2
     glBegin(GL_QUADS);
-    glNormal3f(0.0, 0.0, -1.0);
+    glNormal3f(0.0f, 0.0f, -1.0f);
     for(int i=0; i<subdiv; i++)
     {
         for(int j=0; j<subdiv; j++)
         {
             glTexCoord2f(i, j);
-            glVertex3f(x * i / subdiv, y * j / subdiv, 0.0);
-            glTexCoord2f(i, j + 1.0);
-            glVertex3f(x * i / subdiv, y * (j + 1.0) / subdiv, 0.0);
-            glTexCoord2f(i + 1.0, j + 1.0);
-            glVertex3f(x * (i + 1.0) / subdiv, y * (j + 1.0) / subdiv, 0.0);
-            glTexCoord2f(i + 1.0, j);
-            glVertex3f(x * (i + 1.0) / subdiv, y * j / subdiv, 0.0);
+            glVertex3f(x * i / subdiv, y * j / subdiv, 0.0f);
+            glTexCoord2f(i, j + 1.0f);
+            glVertex3f(x * i / subdiv, y * (j + 1.0f) / subdiv, 0.0f);
+            glTexCoord2f(i + 1.0f, j + 1.0f);
+            glVertex3f(x * (i + 1.0f) / subdiv, y * (j + 1.0f) / subdiv, 0.0f);
+            glTexCoord2f(i + 1.0f, j);
+            glVertex3f(x * (i + 1.0f) / subdiv, y * j / subdiv, 0.0f);
         }
     }
     glEnd();
 
     // Side face 3
     glBegin(GL_QUADS);
-    glNormal3f(1.0, 0.0, 0.0);
+    glNormal3f(1.0f, 0.0f, 0.0f);
     for(int i=0; i<subdiv; i++)
     {
         for(int j=0; j<subdiv; j++)
         {
             glTexCoord2f(i, j);
             glVertex3f(x * i / subdiv, y * j / subdiv, z);
-            glTexCoord2f(i, j + 1.0);
-            glVertex3f(x * i / subdiv, y * (j + 1.0) / subdiv, z);
-            glTexCoord2f(i + 1.0, j + 1.0);
-            glVertex3f(x * (i + 1.0) / subdiv, y * (j + 1.0) / subdiv, z);
-            glTexCoord2f(i + 1.0, j);
-            glVertex3f(x * (i + 1.0) / subdiv, y * j / subdiv, z);
+            glTexCoord2f(i, j + 1.0f);
+            glVertex3f(x * i / subdiv, y * (j + 1.0f) / subdiv, z);
+            glTexCoord2f(i + 1.0f, j + 1.0f);
+            glVertex3f(x * (i + 1.0f) / subdiv, y * (j + 1.0f) / subdiv, z);
+            glTexCoord2f(i + 1.0f, j);
+            glVertex3f(x * (i + 1.0f) / subdiv, y * j / subdiv, z);
         }
     }
     glEnd();
 
     // Side face 4
     glBegin(GL_QUADS);
-    glNormal3f(0.0, 0.0, 1.0);
+    glNormal3f(0.0f, 0.0f, 1.0f);
     for(int i=0; i<subdiv; i++)
     {
         for(int j=0; j<subdiv; j++)
         {
             glTexCoord2f(i, j);
             glVertex3f(x, y * i / subdiv, z * j / subdiv);
-            glTexCoord2f(i + 1.0, j);
-            glVertex3f(x, y * (i + 1.0) / subdiv, z * j / subdiv);
-            glTexCoord2f(i + 1.0, j + 1.0);
-            glVertex3f(x, y * (i + 1.0) / subdiv, z * (j + 1.0) / subdiv);
-            glTexCoord2f(i, j + 1.0);
-            glVertex3f(x, y * i / subdiv, z * (j + 1.0) / subdiv);
+            glTexCoord2f(i + 1.0f, j);
+            glVertex3f(x, y * (i + 1.0f) / subdiv, z * j / subdiv);
+            glTexCoord2f(i + 1.0f, j + 1.0f);
+            glVertex3f(x, y * (i + 1.0f) / subdiv, z * (j + 1.0f) / subdiv);
+            glTexCoord2f(i, j + 1.0f);
+            glVertex3f(x, y * i / subdiv, z * (j + 1.0f) / subdiv);
         }
     }
     glEnd();
 
     // Bottom face
     glBegin(GL_QUADS);
-    glNormal3f(0.0, -1.0, 0.0);
+    glNormal3f(0.0f, -1.0f, 0.0f);
     for(int i=0; i<subdiv; i++)
     {
         for(int j=0; j<subdiv; j++)
         {
             glTexCoord2f(i, j);
-            glVertex3f(x * i / subdiv, 0.0, z * j / subdiv);
-            glTexCoord2f(i, j + 1.0);
-            glVertex3f(x * i / subdiv, 0.0, z * (j + 1.0) / subdiv);
-            glTexCoord2f(i + 1.0, j + 1.0);
-            glVertex3f(x * (i + 1.0) / subdiv, 0.0, z * (j + 1.0) / subdiv);
-            glTexCoord2f(i + 1.0, j);
-            glVertex3f(x * (i + 1.0) / subdiv, 0.0, z * j / subdiv);
+            glVertex3f(x * i / subdiv, 0.0f, z * j / subdiv);
+            glTexCoord2f(i, j + 1.0f);
+            glVertex3f(x * i / subdiv, 0.0f, z * (j + 1.0f) / subdiv);
+            glTexCoord2f(i + 1.0f, j + 1.0f);
+            glVertex3f(x * (i + 1.0f) / subdiv, 0.0f, z * (j + 1.0f) / subdiv);
+            glTexCoord2f(i + 1.0f, j);
+            glVertex3f(x * (i + 1.0f) / subdiv, 0.0f, z * j / subdiv);
         }
     }
     glEnd();
@@ -414,8 +414,8 @@ void displayTeapot(float x, float y, float z, float rot)
 {
     glPushMatrix();
     glTranslatef(x, y, z);
-    glRotatef(rot, 0.0, 0.1, 0.0);
-    glColor3f(0.97, 0.97, 0.85);
+    glRotatef(rot, 0.0f, 0.1f, 0.0f);
+    glColor3f(0.97f, 0.97f, 0.85f);
     glutSolidTeapot(2.0);
     glPopMatrix();
 }
@@ -423,7 +423,7 @@ void displayTeapot(float x, float y, float z, float rot)
 void displayTable(float posx, float posz, float height, float sizex, float sizez, float thickness)
 {
     // Set material properties
-    glColor3f(0.96, 0.91, 0.82);
+    glColor3f(0.96f, 0.91f, 0.82f);
     glMateriali(GL_FRONT, GL_SHININESS, 5);
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, textures[TEXTURE_WOOD]);
@@ -434,27 +434,27 @@ void displayTable(float posx, float posz, float height, float sizex, float sizez
     rectCuboid(sizex, thickness, sizez);
 
     // Leg 1
-    glRotatef(90.0, 1.0, 0.0, 0.0);
+    glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
     glPushMatrix();
-    glTranslatef(1.0, 1.0, 0.0);
+    glTranslatef(1.0f, 1.0f, 0.0f);
     gluCylinder(gluNewQuadric(), 0.5, 0.2, height, 10.0, 10.0);
     glPopMatrix();
 
     // Leg 2
     glPushMatrix();
-    glTranslatef(1.0, sizez - 1.0, 0.0);
+    glTranslatef(1.0f, sizez - 1.0f, 0.0f);
     gluCylinder(gluNewQuadric(), 0.5, 0.2, height, 10.0, 10.0);
     glPopMatrix();
 
     // Leg 3
     glPushMatrix();
-    glTranslatef(sizex - 1.0, sizez - 1.0, 0.0);
+    glTranslatef(sizex - 1.0f, sizez - 1.0f, 0.0f);
     gluCylinder(gluNewQuadric(), 0.5, 0.2, height, 10.0, 10.0);
     glPopMatrix();
 
     // Leg 4
     glPushMatrix();
-    glTranslatef(sizex - 1.0, 1.0, 0.0);
+    glTranslatef(sizex - 1.0f, 1.0f, 0.0f);
     gluCylinder(gluNewQuadric(), 0.5, 0.2, height, 10.0, 10.0);
     glPopMatrix();
 
@@ -468,25 +468,25 @@ void displayTable(float posx, float posz, float height, float sizex, float sizez
 void displayChair(float posx, float posz, float height, float seat_width, float seat_depth, float thickness)
 {
     float chair_back_total_height = 7.0;
-    float chair_back_height = seat_width / 2.0;
-    float chair_back_width = seat_width - 1.0;
+    float chair_back_height = seat_width / 2.0f;
+    float chair_back_width = seat_width - 1.0f;
     glPushMatrix();
     displayTable(posx, posz, height, seat_width, seat_depth, thickness);
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, textures[TEXTURE_WOOD]);
     glTranslatef(posx, height, posz);
-    glRotatef(-90.0, 1.0, 0.0, 0.0);
+    glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
     glPushMatrix();
-    glTranslatef(0.5, -thickness / 2.0, 0.5 * chair_back_total_height);
+    glTranslatef(0.5f, -thickness / 2.0f, 0.5f * chair_back_total_height);
     rectCuboid(chair_back_width, thickness, chair_back_height);
     glPopMatrix();
 
     glPushMatrix();
-    glTranslatef(0.5, 0.0, 0.0);
+    glTranslatef(0.5f, 0.0f, 0.0f);
     gluCylinder(gluNewQuadric(), 0.3, 0.3, chair_back_total_height, 10.0, 10.0);
     glPopMatrix();
     glPushMatrix();
-    glTranslatef(seat_width - 0.5, 0.0, 0.0);
+    glTranslatef(seat_width - 0.5f, 0.0f, 0.0f);
     gluCylinder(gluNewQuadric(), 0.3, 0.3, chair_back_total_height, 10.0, 10.0);
     glPopMatrix();
     glPopMatrix();
@@ -499,29 +499,29 @@ void displayChair(float posx, float posz, float height, float seat_width, float 
 // for a chrome teapot and tweaked the numbers a bit.
 void displayFridge(float posx, float posz, float width, float height, float depth)
 {
-    float door_split = height * 0.7;
+    float door_split = height * 0.7f;
     int subdiv = 80;
 
     // Set material properties (chrome)
-    GLfloat chrome_amb[] = {0.25, 0.25, 0.25, 1.0};
-    GLfloat chrome_diff[] = {0.4, 0.4, 0.4};
-    GLfloat chrome_spec[] = {0.774597, 0.774597, 0.774597};
+    GLfloat chrome_amb[] = {0.25f, 0.25f, 0.25f, 1.0f};
+    GLfloat chrome_diff[] = {0.4f, 0.4f, 0.4f};
+    GLfloat chrome_spec[] = {0.774597f, 0.774597f, 0.774597f};
     glMaterialfv(GL_FRONT, GL_AMBIENT, chrome_amb);
     glMaterialfv(GL_FRONT, GL_DIFFUSE, chrome_diff);
     glMaterialfv(GL_FRONT, GL_SPECULAR, chrome_spec);
     glMaterialf(GL_FRONT, GL_SHININESS, 100.0);
-    glColor3f(0.7, 0.7, 0.7);
+    glColor3f(0.7f, 0.7f, 0.7f);
 
     glPushMatrix();
-    glTranslatef(posx, 0.0, posz);
+    glTranslatef(posx, 0.0f, posz);
     rectCuboidDiv(width, height, depth, subdiv); // fridge body
 
-    glTranslatef(0.4, 0.0, depth);
-    rectCuboid(width - 0.8, height, 0.2); // fridge rubber
-    glTranslatef(-0.4, 0.0, 0.2);
-    rectCuboidDiv(width, door_split - 0.1, 1.0, subdiv); // lower door
-    glTranslatef(0.0, door_split + 0.1, 0.0);
-    rectCuboidDiv(width, height - door_split - 0.1, 1.0, subdiv); // upper door
+    glTranslatef(0.4f, 0.0f, depth);
+    rectCuboid(width - 0.8f, height, 0.2f); // fridge rubber
+    glTranslatef(-0.4f, 0.0f, 0.2f);
+    rectCuboidDiv(width, door_split - 0.1f, 1.0f, subdiv); // lower door
+    glTranslatef(0.0f, door_split + 0.1f, 0.0f);
+    rectCuboidDiv(width, height - door_split - 0.1f, 1.0f, subdiv); // upper door
     glPopMatrix();
 }
 
@@ -529,8 +529,8 @@ void displayFridge(float posx, float posz, float width, float height, float dept
 void displayBin(float posx, float posz, float width, float height)
 {
     glPushMatrix();
-    glTranslatef(posx, 0.0, posz);
-    glRotatef(-90.0, 1.0, 0.0, 0.0);
+    glTranslatef(posx, 0.0f, posz);
+    glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
     gluCylinder(gluNewQuadric(), width * 0.4, width * 0.5, height, 30.0, 30.0);
     glPopMatrix();
 }
@@ -1112,6 +1112,7 @@ void toggleHelp()
 
 void displayMovingMode()
 {
+    // Loads 2D projection
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
@@ -1119,7 +1120,9 @@ void displayMovingMode()
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glLoadIdentity();
-    glDisable(GL_DEPTH_TEST);
+
+    glDisable(GL_DEPTH_TEST);   // Makes it float
+
     glColor3f(0.0f, 1.0f, 0.0f);
     switch (mvstate)
     {
@@ -1135,6 +1138,8 @@ void displayMovingMode()
         displayString(5.0 / win_width, 25.0 / win_height, GLUT_BITMAP_TIMES_ROMAN_24, "Light Mode");
         break;
     }
+    
+    // Back to defaults
     glEnable(GL_DEPTH_TEST);
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
@@ -1142,16 +1147,23 @@ void displayMovingMode()
     glPopMatrix();
 }
 
+// Saves user's input when in adjust ambient menu.
+// Keep in mind that the user inputs 3 integers between 0-100.
+// When given more than 3 numbers in input, it reads only the first 3.
+// When given numbers larger than 100, OpenGL will regard them as 1.0.
 void HandleKeystrokes(unsigned char key)
 {
     if(adjust_ambient)
     {
+        // Adds character to input vector
         if((key >= '0' && key <= '9') || key == KEY_SPACE)
             user_input.push_back(key);
 
+        // Deletes character
         else if(key == KEY_BACKSPACE)
             user_input.pop_back();
-
+        
+        // Parses input
         else if(key == KEY_ENTER)
         {
             std::string s(user_input.begin(), user_input.end());
@@ -1163,6 +1175,7 @@ void HandleKeystrokes(unsigned char key)
             user_input.clear();
         }
 
+        // Exits
         else if(key == KEY_ESC)
         {
             adjust_ambient = false;
@@ -1180,64 +1193,61 @@ void Keyboard(unsigned char key, int x, int y)
         switch (key)
         {
         case 'd': // MOVE HEAD RIGHT
-            if(head_y_rotate > -60.0)
-                head_y_rotate -= 1;
+            if(head_y_rotate > -60.0f)
+                head_y_rotate -= 1.0f;
             break;
 
         case 'a': // MOVE HEAD LEFT
-            if(head_y_rotate < 60.0)
-                head_y_rotate += 1;
+            if(head_y_rotate < 60.0f)
+                head_y_rotate += 1.0f;
             break;
 
         case 'w': // MOVE HEAD UP
-            if(head_x_rotate > -10.0)
-                head_x_rotate -= 1;
+            if(head_x_rotate > -10.0f)
+                head_x_rotate -= 1.0f;
             break;
 
         case 's': // MOVE HEAD DOWN
-            if(head_x_rotate < 17.0)
-                head_x_rotate += 1;
+            if(head_x_rotate < 17.0f)
+                head_x_rotate += 1.0f;
             break;
         
         case 'h': // MOVE ARM RIGHT
-            if(shoulder_y_rotate > -120.0)
-                shoulder_y_rotate -= 1;
+            if(shoulder_y_rotate > -120.0f)
+                shoulder_y_rotate -= 1.0f;
             break;
 
         case 'f': // MOVE ARM LEFT
-            if(shoulder_y_rotate < -10.0)
-                shoulder_y_rotate += 1;
+            if(shoulder_y_rotate < -10.0f)
+                shoulder_y_rotate += 1.0f;
             break;
 
         case 't': // MOVE ARM UP
-            if(shoulder_x_rotate > 0.0)
-                shoulder_x_rotate -= 1;
+            if(shoulder_x_rotate > 0.0f)
+                shoulder_x_rotate -= 1.0f;
             break;
 
         case 'g': // MOVE ARM DOWN
-            if(shoulder_x_rotate < 90.0)
-                shoulder_x_rotate += 1;
+            if(shoulder_x_rotate < 90.0f)
+                shoulder_x_rotate += 1.0f;
             break;
 
         case 'j': // CLOSE ELBOW
-            if(elbow_x_rotate > -160.0)
-                elbow_x_rotate -= 1;
+            if(elbow_x_rotate > -160.0f)
+                elbow_x_rotate -= 1.0f;
             break;
 
         case 'u': // OPEN ELBOW
-            if(elbow_x_rotate < 0.0)
-                elbow_x_rotate += 1;
+            if(elbow_x_rotate < 0.0f)
+                elbow_x_rotate += 1.0f;
             break;
 
         case 'i': // ROTATE HAND INWARDS
-            hand_y_rotate += 1;
+            hand_y_rotate += 1.0f;
             break;
 
         case 'k': // ROTATE HAND OUTWARDS
-            hand_y_rotate -= 1;
-            break;
-
-        default:
+            hand_y_rotate -= 1.0f;
             break;
         }
         break;
@@ -1245,50 +1255,50 @@ void Keyboard(unsigned char key, int x, int y)
         switch (key)
         {
         case 'w': // MOVE LIGHT DIRECTION UP
-            if(light_yref < 0.0)
-                light_yref += 0.01;
+            if(light_yref < 0.0f)
+                light_yref += 0.01f;
             break;
 
         case 's': // MOVE LIGHT DIRECTION DOWN
-            if(light_yref > -1.0)
-                light_yref -= 0.01;
+            if(light_yref > -1.0f)
+                light_yref -= 0.01f;
             break;
 
         case 'd': // MOVE LIGHT DIRECTION TOWARDS X+
-            if(light_xref < 1.0)
-                light_xref += 0.01;
+            if(light_xref < 1.0f)
+                light_xref += 0.01f;
             break;
 
         case 'a': // MOVE LIGHT DIRECTION TOWARDS X-
-            if(light_xref > -1.0)
-                light_xref -= 0.01;
+            if(light_xref > -1.0f)
+                light_xref -= 0.01f;
             break;
 
         case 'e': // MOVE LIGHT DIRECTION TOWARDS Z+
-            if(light_zref < 1.0)
-                light_zref += 0.01;
+            if(light_zref < 1.0f)
+                light_zref += 0.01f;
             break;
 
         case 'q': // MOVE LIGHT DIRECTION TOWARDS Z-
-            if(light_zref > -1.0)
-                light_zref -= 0.01;
+            if(light_zref > -1.0f)
+                light_zref -= 0.01f;
             break;
 
-        case 'r':
-            if(red < 1.0 && green < 1.0 && blue < 1.0)
+        case 'r': // INCREASE AMBIENT ILLUMINATION
+            if(red < 1.0f && green < 1.0f && blue < 1.0f)
             {
-                red += 0.05;
-                green += 0.05;
-                blue += 0.05;
+                red += 0.05f;
+                green += 0.05f;
+                blue += 0.05f;
             }   
             break;
 
-        case 'f':
-            if(red > 0.0 && blue > 0.0 && green > 0.0)
+        case 'f': // DECREASE AMBIENT ILLUMINATION
+            if(red > 0.0f && blue > 0.0f && green > 0.0f)
             {
-                red -= 0.05;
-                blue -= 0.05;
-                green -= 0.05;
+                red -= 0.05f;
+                blue -= 0.05f;
+                green -= 0.05f;
             }
             break;
         }
@@ -1334,25 +1344,25 @@ void SpecialKeyboard(int key, int x, int y)
             switch (key)
             {
             case GLUT_KEY_UP: // MOVE ROBOT FORWARD
-                if(robotx < 50.0)
-                    robotx += 0.5 * sin(robot_y_rotate * PI / 180.0);
-                if(robotz < 50.0)
-                    robotz += 0.5 * cos(robot_y_rotate * PI / 180.0);
+                if(robotx < 50.0f)
+                    robotx += 0.5f * sin(robot_y_rotate * PI / 180.0);
+                if(robotz < 50.0f)
+                    robotz += 0.5f * cos(robot_y_rotate * PI / 180.0);
                 break;
 
             case GLUT_KEY_DOWN: // MOVE ROBOT BACKWARDS
-                if(robotx > -50.0)
-                    robotx += 0.5 * sin((180.0 + robot_y_rotate) * PI / 180.0);
-                if(robotz > -50.0)
-                    robotz += 0.5 * cos((180.0 + robot_y_rotate) * PI / 180.0);
+                if(robotx > -50.0f)
+                    robotx += 0.5f * sin((180.0 + robot_y_rotate) * PI / 180.0);
+                if(robotz > -50.0f)
+                    robotz += 0.5f * cos((180.0 + robot_y_rotate) * PI / 180.0);
                 break;
 
             case GLUT_KEY_RIGHT: // TURN RIGHT
-                robot_y_rotate -= 2;
+                robot_y_rotate -= 2.0f;
                 break;
 
             case GLUT_KEY_LEFT: // TURN LEFT
-                robot_y_rotate += 2;
+                robot_y_rotate += 2.0f;
                 break;
             
             default:
@@ -1364,21 +1374,21 @@ void SpecialKeyboard(int key, int x, int y)
             switch (key)
             {
             case GLUT_KEY_UP: // MOVE CAMERA CLOSER
-                if(cam_dist > 0.0)
-                    cam_dist -= 1;
+                if(cam_dist > 0.0f)
+                    cam_dist -= 1.0f;
                 break;
 
             case GLUT_KEY_DOWN: // MOVE CAMERA AWAY
-                if(cam_dist < 120.0)
-                    cam_dist += 1;
+                if(cam_dist < 120.0f)
+                    cam_dist += 1.0f;
                 break;
 
             case GLUT_KEY_RIGHT: // ROTATE CAMERA RIGHT
-                world_rot -= 1;
+                world_rot -= 1.0f;
                 break;
 
             case GLUT_KEY_LEFT: // ROTATE CAMERA LEFT
-                world_rot += 1;
+                world_rot += 1.0f;
                 break;
             
             default:
@@ -1389,33 +1399,33 @@ void SpecialKeyboard(int key, int x, int y)
             switch (key)
             {
             case GLUT_KEY_UP: // MOVE LIGHT SOURCE UP
-                if(light_y < 240.0)
-                    light_y += 1;
+                if(light_y < 240.0f)
+                    light_y += 1.0f;
                 break;
 
             case GLUT_KEY_DOWN: // MOVE LIGHT SOURCE DOWN
-                if(light_y > 0.0)
-                    light_y -= 1;
+                if(light_y > 0.0f)
+                    light_y -= 1.0f;
                 break;
 
             case GLUT_KEY_RIGHT: // MOVE LIGHT SOURCE TOWARDS X+
-                if(light_x < 100.0)
-                    light_x += 1;
+                if(light_x < 100.0f)
+                    light_x += 1.0f;
                 break;
 
             case GLUT_KEY_LEFT: // MOVE LIGHT SOURCE TOWARDS X-
-                if(light_x > -100.0)
-                    light_x -= 1;
+                if(light_x > -100.0f)
+                    light_x -= 1.0f;
                 break;
 
             case GLUT_KEY_END: // MOVE LIGHT SOURCE TOWARDS Z+
-                if(light_z < 100.0)
-                    light_z += 1;
+                if(light_z < 100.0f)
+                    light_z += 1.0f;
                 break;
 
             case GLUT_KEY_HOME: // MOVE LIGHT SOURCE TOWARDS Z-
-                if(light_z > -100.0)
-                    light_z -= 1;
+                if(light_z > -100.0f)
+                    light_z -= 1.0f;
                 break;
             }
         }
