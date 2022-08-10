@@ -1079,7 +1079,7 @@ void displayHelp()
         glEnable(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, textures[TEXTURE_HELP]);
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-        glColor4f(0.0f, 0.0f, 0.0f, 0.7f);
+        glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
 
         glBegin(GL_QUADS);
         glTexCoord2f(0.0f, 1.0f);
