@@ -844,7 +844,6 @@ void drawHand()
     glEnd();
 }
 
-
 void displayRobot()
 {
     // Sets material properties
@@ -955,7 +954,7 @@ void displayRobot()
 
 void displayString(float x, float y, void *font, const char *string)
 {
-    glDisable(GL_LIGHTING);
+    glDisable(GL_LIGHTING); // To show color
     const char *c;
     glRasterPos2f(x, y);
     for (c=string; *c != '\0'; c++) {
@@ -964,43 +963,62 @@ void displayString(float x, float y, void *font, const char *string)
     glEnable(GL_LIGHTING);
 }
 
+// Displays adjust ambient box, reads user input and shows it.
+// I chose to let the user pick 3 integers for ease of use.
+// User input is saved as a C++ vector, and parsed in HandleKeystrokes().
+//
+// The position and size of elements are all floats between 0.0 and 1.0 and
+// are relative to the the window size, where (0.0, 0.0) is bottom left
+// and (1.0, 1.0) is top right.
 void displayAdjustAmbient()
 {
     if(adjust_ambient)
-    {    GLfloat box_w = AMBIENT_BOX_W / win_width, box_h = AMBIENT_BOX_H / win_height,
-                box_x = 0.5 - box_w * 0.5,
-                box_y = 0.5 - box_w * 0.5;
+    {   
+        // Box has a fixed size and placed in the middle
+        GLfloat box_w = AMBIENT_BOX_W / win_width, box_h = AMBIENT_BOX_H / win_height,
+                box_x = 0.5f - box_w * 0.5f,
+                box_y = 0.5f - box_w * 0.5f;
 
         std::string s(user_input.begin(), user_input.end());
 
+        // Loads 2D projection
         glMatrixMode(GL_PROJECTION);
         glPushMatrix();
         glLoadIdentity();
         gluOrtho2D(0.0, 1.0, 0.0, 1.0);
-
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
         glLoadIdentity();
 
-        glDisable(GL_DEPTH_TEST);
-        glEnable(GL_BLEND);
-        glColor4f(0.0, 0.0, 0.0, 0.7);
+        glDisable(GL_DEPTH_TEST);   // Makes it float
+        glEnable(GL_BLEND);         // Enables transparency
+
+        glColor4f(0.0f, 0.0f, 0.0f, 0.7f);
         glBegin(GL_QUADS);
         glVertex2f(box_x, box_y);
         glVertex2f(box_x + box_w, box_y);
         glVertex2f(box_x + box_w, box_y + box_h);
         glVertex2f(box_x, box_y + box_h);
         glEnd();
-        glDisable(GL_BLEND);
 
-        glColor3f(1.0, 1.0, 1.0);
-        displayString(box_x + (30.0 / win_width), box_y + box_h - (30.0 / win_height), GLUT_BITMAP_HELVETICA_18, "Adjust ambient light");
-        displayString(box_x + (30.0 / win_width), box_y + box_h - (48.0 / win_height), GLUT_BITMAP_HELVETICA_12, "Enter 3 integers between 0-100 seperated by spaces");
-        displayString(box_x + (30.0 / win_width), box_y + box_h - (100.0 / win_height), GLUT_BITMAP_TIMES_ROMAN_24, s.c_str());
-        glColor3f(1.0, 0.0, 0.0);
-        displayString(box_x + (120.0 / win_width), box_y + (30.0 / win_height), GLUT_BITMAP_HELVETICA_12, "Press [ENTER] to continue");
+        glDisable(GL_BLEND); // Disables transparency
+
+        glColor3f(1.0f, 1.0f, 1.0f);
+        // Heading
+        displayString(box_x + (30.0f / win_width), box_y + box_h - (30.0f / win_height), GLUT_BITMAP_HELVETICA_18, "Adjust ambient light");
+        
+        // Subheading
+        displayString(box_x + (30.0f / win_width), box_y + box_h - (48.0f / win_height), GLUT_BITMAP_HELVETICA_12, "Enter 3 integers between 0-100 seperated by spaces");
+        
+        // User input
+        displayString(box_x + (30.0f / win_width), box_y + box_h - (100.0f / win_height), GLUT_BITMAP_TIMES_ROMAN_24, s.c_str());
+        
+        // Further instructions
+        glColor3f(1.0f, 0.0f, 0.0f);
+        displayString(box_x + (85.0f / win_width), box_y + (30.0f / win_height), GLUT_BITMAP_HELVETICA_12, "Press [ENTER] to continue, [ESC] to exit");
+        
+        // Back to defaults
         glEnable(GL_DEPTH_TEST);
-
         glMatrixMode(GL_PROJECTION);
         glPopMatrix();
         glMatrixMode(GL_MODELVIEW);
@@ -1015,60 +1033,76 @@ void toggleAdjustAmbient()
         }
 }
 
+// Displays a help menu as a slightly transparent image decal over a quad.
+// I chose to implement this as a preloaded texture for better performance.
+// The help menu is transparent enough so the user can try the keys listed
+// and see their effect while still looking at the menu.
+//
+// The position and size of elements are all floats between 0.0 and 1.0 and
+// are relative to the the window size, where (0.0, 0.0) is bottom left
+// and (1.0, 1.0) is top right.
 void displayHelp()
 {
     if(show_help)
     {   
         GLfloat box_w, box_h;
-        if(win_width >= START_WIDTH && win_height >= START_HEIGHT) // set to max size
+        // sets to max size when possible
+        if(win_width >= START_WIDTH && win_height >= START_HEIGHT) 
         {
             box_w = HELP_MAX_WIDTH / win_width;
             box_h = HELP_MAX_HEIGHT / win_height;
         }
-        else // set to relative size
+        // sets to relative size otherwise
+        else 
         {
-            box_w = 0.8;
-            box_h = ( box_w * win_width * 2.0 ) / (win_height * 3.0);
+            box_w = 0.8f;
+            box_h = ( box_w * win_width * 2.0f ) / (win_height * 3.0f);
         }
-        GLfloat box_x = 0.5 - box_w * 0.5,
-                box_y = 0.5 - box_w * 0.5;
 
+        // positions box in the middle
+        GLfloat box_x = 0.5f - box_w * 0.5f,
+                box_y = 0.5f - box_w * 0.5f;
+
+        // loads 2D projection
         glMatrixMode(GL_PROJECTION);
         glPushMatrix();
         glLoadIdentity();
-        gluOrtho2D(0.0, 1.0, 0.0, 1.0);
-
+        gluOrtho2D(0.0, 1.0, 0.0, 1.0); 
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
         glLoadIdentity();
 
-        glDisable(GL_LIGHTING);
-        glDisable(GL_DEPTH_TEST);
-        glEnable(GL_BLEND);
+        glDisable(GL_LIGHTING);     // shows color
+        glDisable(GL_DEPTH_TEST);   // makes it float
+        glEnable(GL_BLEND);         // enables transparency
+
         glEnable(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, textures[TEXTURE_HELP]);
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-        glColor4f(0.0, 0.0, 0.0, 0.7);
+        glColor4f(0.0f, 0.0f, 0.0f, 0.7f);
+
         glBegin(GL_QUADS);
-        glTexCoord2f(0.0, 1.0);
+        glTexCoord2f(0.0f, 1.0f);
         glVertex2f(box_x, box_y);
-        glTexCoord2f(1.0, 1.0);
+        glTexCoord2f(1.0f, 1.0f);
         glVertex2f(box_x + box_w, box_y);
-        glTexCoord2f(1.0, 0.0);
+        glTexCoord2f(1.0f, 0.0f);
         glVertex2f(box_x + box_w, box_y + box_h);
-        glTexCoord2f(0.0, 0.0);
+        glTexCoord2f(0.0f, 0.0f);
         glVertex2f(box_x, box_y + box_h);
         glEnd();
+
+        // Back to default
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
         glDisable(GL_TEXTURE_2D);
         glDisable(GL_BLEND);
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_LIGHTING);
-
         glMatrixMode(GL_PROJECTION);
         glPopMatrix();
         glMatrixMode(GL_MODELVIEW);
-        glPopMatrix();}
+        glPopMatrix();
+    }
 }
 
 void toggleHelp()
@@ -1086,7 +1120,7 @@ void displayMovingMode()
     glPushMatrix();
     glLoadIdentity();
     glDisable(GL_DEPTH_TEST);
-    glColor3f(0.0, 1.0, 0.0);
+    glColor3f(0.0f, 1.0f, 0.0f);
     switch (mvstate)
     {
     case MOV_ROBOT:

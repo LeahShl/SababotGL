@@ -73,8 +73,8 @@ void updateWindowAspect(float new_aspect);
 void loadTexture(const char *filename, GLenum target, GLenum format, int nchannels);
 
 /**
- * @brief Initializes textures and loads them to buffer
- * 
+ * @brief Initializes textures and loads them to buffer.
+ *        Should be called before a display function.
  */
 void initTextures();
 
