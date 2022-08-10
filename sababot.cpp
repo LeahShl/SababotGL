@@ -18,7 +18,7 @@ GLint win_width = START_WIDTH,
       win_height = START_HEIGHT;
 
 // THIRD PERSON CAMERA
-GLfloat cam_dist = 50.0, world_rot = 0.0,
+GLfloat cam_dist = 50.0, cam_height_factor = 1.0, world_rot = 0.0,
         xref = 0.0, yref = 0.0, zref = 0.0,
         Vx = 0.0, Vy = 1.0, Vz = 0.0;
 
@@ -117,8 +117,8 @@ void initTextures()
 // transformation to the robot's movement, giving the user the feeling
 // that they see the world from the robot's eyes.
 // 
-// In third person mode, the camera is set at an equal distance from
-// each axis and rotated around the Y axis.
+// In third person mode, the camera is set at an equal distance from X
+// and Z axes and rotated around the Y axis.
 void initCamera()
 {
     glMatrixMode(GL_PROJECTION);
@@ -135,7 +135,7 @@ void initCamera()
     }
     else
     {
-        gluLookAt(cam_dist, cam_dist, cam_dist, xref, yref, zref, Vx, Vy, Vz);
+        gluLookAt(cam_dist, cam_dist * cam_height_factor, cam_dist, xref, yref, zref, Vx, Vy, Vz);
         glRotatef(world_rot, 0.0f, 1.0f, 0.0f);
     }
 }
@@ -1193,52 +1193,52 @@ void Keyboard(unsigned char key, int x, int y)
         switch (key)
         {
         case 'd': // MOVE HEAD RIGHT
-            if(head_y_rotate > -60.0f)
+            if(head_y_rotate > ROBOT_HEAD_RIGHT_LIMIT)
                 head_y_rotate -= 1.0f;
             break;
 
         case 'a': // MOVE HEAD LEFT
-            if(head_y_rotate < 60.0f)
+            if(head_y_rotate < ROBOT_HEAD_LEFT_LIMIT)
                 head_y_rotate += 1.0f;
             break;
 
         case 'w': // MOVE HEAD UP
-            if(head_x_rotate > -10.0f)
+            if(head_x_rotate > ROBOT_HEAD_UP_LIMIT)
                 head_x_rotate -= 1.0f;
             break;
 
         case 's': // MOVE HEAD DOWN
-            if(head_x_rotate < 17.0f)
+            if(head_x_rotate < ROBOT_HEAD_DOWN_LIMIT)
                 head_x_rotate += 1.0f;
             break;
         
         case 'h': // MOVE ARM RIGHT
-            if(shoulder_y_rotate > -120.0f)
+            if(shoulder_y_rotate > ROBOT_ARM_RIGHT_LIMIT)
                 shoulder_y_rotate -= 1.0f;
             break;
 
         case 'f': // MOVE ARM LEFT
-            if(shoulder_y_rotate < -10.0f)
+            if(shoulder_y_rotate < ROBOT_ARM_LEFT_LIMIT)
                 shoulder_y_rotate += 1.0f;
             break;
 
         case 't': // MOVE ARM UP
-            if(shoulder_x_rotate > 0.0f)
+            if(shoulder_x_rotate > ROBOT_ARM_UP_LIMIT)
                 shoulder_x_rotate -= 1.0f;
             break;
 
         case 'g': // MOVE ARM DOWN
-            if(shoulder_x_rotate < 90.0f)
+            if(shoulder_x_rotate < ROBOT_ARM_DOWN_LIMIT)
                 shoulder_x_rotate += 1.0f;
             break;
 
         case 'j': // CLOSE ELBOW
-            if(elbow_x_rotate > -160.0f)
+            if(elbow_x_rotate > ROBOT_ELBOW_CLOSED)
                 elbow_x_rotate -= 1.0f;
             break;
 
         case 'u': // OPEN ELBOW
-            if(elbow_x_rotate < 0.0f)
+            if(elbow_x_rotate < ROBOT_ELBOW_OPEN)
                 elbow_x_rotate += 1.0f;
             break;
 
@@ -1344,16 +1344,16 @@ void SpecialKeyboard(int key, int x, int y)
             switch (key)
             {
             case GLUT_KEY_UP: // MOVE ROBOT FORWARD
-                if(robotx < 50.0f)
+                if(robotx < FLOOR_SIZE * 0.5f)
                     robotx += 0.5f * sin(robot_y_rotate * PI / 180.0);
-                if(robotz < 50.0f)
+                if(robotz < FLOOR_SIZE * 0.5f)
                     robotz += 0.5f * cos(robot_y_rotate * PI / 180.0);
                 break;
 
             case GLUT_KEY_DOWN: // MOVE ROBOT BACKWARDS
-                if(robotx > -50.0f)
+                if(robotx > -FLOOR_SIZE * 0.5f)
                     robotx += 0.5f * sin((180.0 + robot_y_rotate) * PI / 180.0);
-                if(robotz > -50.0f)
+                if(robotz > -FLOOR_SIZE * 0.5f)
                     robotz += 0.5f * cos((180.0 + robot_y_rotate) * PI / 180.0);
                 break;
 
@@ -1374,12 +1374,12 @@ void SpecialKeyboard(int key, int x, int y)
             switch (key)
             {
             case GLUT_KEY_UP: // MOVE CAMERA CLOSER
-                if(cam_dist > 0.0f)
+                if(cam_dist > CAM_CLOSEST)
                     cam_dist -= 1.0f;
                 break;
 
             case GLUT_KEY_DOWN: // MOVE CAMERA AWAY
-                if(cam_dist < 120.0f)
+                if(cam_dist < CAM_FARTHEST)
                     cam_dist += 1.0f;
                 break;
 
@@ -1391,7 +1391,14 @@ void SpecialKeyboard(int key, int x, int y)
                 world_rot += 1.0f;
                 break;
             
-            default:
+            case GLUT_KEY_PAGE_UP: // MOVE CAMERA UP
+                if(cam_height_factor < CAM_MAX_HEIGHT_FACTOR)
+                    cam_height_factor += 0.01f;
+                break;
+
+            case GLUT_KEY_PAGE_DOWN: // MOVE CAMERA DOWN
+                if(cam_height_factor > CAM_MIN_HEIGHT_FACTOR)
+                    cam_height_factor -= 0.01f;
                 break;
             }
 
@@ -1399,32 +1406,32 @@ void SpecialKeyboard(int key, int x, int y)
             switch (key)
             {
             case GLUT_KEY_UP: // MOVE LIGHT SOURCE UP
-                if(light_y < 240.0f)
+                if(light_y < LIGHT_MAX_Y)
                     light_y += 1.0f;
                 break;
 
             case GLUT_KEY_DOWN: // MOVE LIGHT SOURCE DOWN
-                if(light_y > 0.0f)
+                if(light_y > LIGHT_MIN_Y)
                     light_y -= 1.0f;
                 break;
 
             case GLUT_KEY_RIGHT: // MOVE LIGHT SOURCE TOWARDS X+
-                if(light_x < 100.0f)
+                if(light_x < FLOOR_SIZE)
                     light_x += 1.0f;
                 break;
 
             case GLUT_KEY_LEFT: // MOVE LIGHT SOURCE TOWARDS X-
-                if(light_x > -100.0f)
+                if(light_x > -FLOOR_SIZE)
                     light_x -= 1.0f;
                 break;
 
             case GLUT_KEY_END: // MOVE LIGHT SOURCE TOWARDS Z+
-                if(light_z < 100.0f)
+                if(light_z < FLOOR_SIZE)
                     light_z += 1.0f;
                 break;
 
             case GLUT_KEY_HOME: // MOVE LIGHT SOURCE TOWARDS Z-
-                if(light_z > -100.0f)
+                if(light_z > -FLOOR_SIZE)
                     light_z -= 1.0f;
                 break;
             }

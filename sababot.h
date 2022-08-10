@@ -21,6 +21,7 @@ enum states
     MOV_LIGHT
 };
 
+// GUI
 const int START_WIDTH = 1200;
 const int START_HEIGHT = 800;
 const float HELP_MAX_WIDTH = 960.0;
@@ -28,11 +29,13 @@ const float HELP_MAX_HEIGHT = 640.0;
 const float AMBIENT_BOX_W = 400.0;
 const float AMBIENT_BOX_H = 200.0;
 
+// KEYBOARD
 const unsigned char KEY_SPACE = 32;
 const unsigned char KEY_BACKSPACE = 8;
 const unsigned char KEY_ENTER = 13;
 const unsigned char KEY_ESC = 27;
 
+// OBJECT PROPERTIES
 const float FLOOR_SIZE = 100.0;
 const float TABLE_HEIGHT = 10.0;
 const float TABLE_SIZEX = 20.0;
@@ -50,6 +53,24 @@ const float ROBOT_BODY_HEIGHT = 10.0;
 const float ROBOT_BODY_DEPTH = 3.0;
 const float ROBOT_NECK_LENGTH = 1.0;
 const float ROBOT_ARM_LENGTH = 3.0;
+
+// MOVEMENT LIMITS
+const float ROBOT_HEAD_RIGHT_LIMIT = -60.0;
+const float ROBOT_HEAD_LEFT_LIMIT = 60.0;
+const float ROBOT_HEAD_UP_LIMIT = -10.0;
+const float ROBOT_HEAD_DOWN_LIMIT = 17.0;
+const float ROBOT_ARM_RIGHT_LIMIT = -120.0;
+const float ROBOT_ARM_LEFT_LIMIT = -10.0;
+const float ROBOT_ARM_UP_LIMIT = -60.0;
+const float ROBOT_ARM_DOWN_LIMIT = 90.0;
+const float ROBOT_ELBOW_CLOSED = -160.0;
+const float ROBOT_ELBOW_OPEN = 0.0;
+const float CAM_CLOSEST = 1.0;
+const float CAM_FARTHEST = 120.0;
+const float CAM_MAX_HEIGHT_FACTOR = 2.0;
+const float CAM_MIN_HEIGHT_FACTOR = 0.1;
+const float LIGHT_MIN_Y = 1.0;
+const float LIGHT_MAX_Y = 240.0;
 
 /**********************************
  **********  FUNCTIONS  ***********
