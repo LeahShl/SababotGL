@@ -77,11 +77,12 @@ const float LIGHT_MAX_Y = 240.0;
  **********************************/
 
 /**
- * @brief Sets new aspect ratio for the frustum
+ * @brief Updates window dimensions and aspect ratio
  * 
- * @param new_aspect The new aspect ratio to be set (width/height)
+ * @param w New window width 
+ * @param h New window height
  */
-void updateWindowAspect(float new_aspect);
+void updateWindowDims(GLsizei w, GLsizei h);
 
 /**
  * @brief Loads a 1D/2D image texture to a target

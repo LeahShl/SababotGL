@@ -70,7 +70,7 @@ void Display()
  */
 void Reshape(GLsizei w, GLsizei h)
 {
-    updateWindowAspect(1.0 * w / h);
+    updateWindowDims(w, h);
     glViewport(0, 0, w, h);
 }
 

@@ -45,9 +45,11 @@ GLfloat red = 0.5, green = 0.5, blue = 0.5,
 std::vector <char> user_input = {}; 
 
 // The aspect is used to update frustum in initCamera()
-void updateWindowAspect(float new_aspect)
+void updateWindowDims(GLsizei w, GLsizei h)
 {
-    aspect = new_aspect;
+    win_width = w;
+    win_height = h;
+    aspect = 1.0 * w / h;
 }
 
 // Loads a 1D/2D image texture to buffer using stb_image.h.
@@ -994,28 +996,30 @@ void displayAdjustAmbient()
         glEnable(GL_BLEND);         // Enables transparency
 
         glColor4f(0.0f, 0.0f, 0.0f, 0.7f);
+
+        glTranslatef(box_x, box_y, 0.0f);
         glBegin(GL_QUADS);
-        glVertex2f(box_x, box_y);
-        glVertex2f(box_x + box_w, box_y);
-        glVertex2f(box_x + box_w, box_y + box_h);
-        glVertex2f(box_x, box_y + box_h);
+        glVertex2f(0.0f, 0.0f);
+        glVertex2f(box_w, 0.0f);
+        glVertex2f(box_w, box_h);
+        glVertex2f(0.0f, box_h);
         glEnd();
 
-        glDisable(GL_BLEND); // Disables transparency
+        glDisable(GL_BLEND); // Disables transparencybox_y
 
         glColor3f(1.0f, 1.0f, 1.0f);
         // Heading
-        displayString(box_x + (30.0f / win_width), box_y + box_h - (30.0f / win_height), GLUT_BITMAP_HELVETICA_18, "Adjust ambient light");
+        displayString(30.0f / win_width, box_h - (30.0f / win_height), GLUT_BITMAP_HELVETICA_18, "Adjust ambient light");
         
         // Subheading
-        displayString(box_x + (30.0f / win_width), box_y + box_h - (48.0f / win_height), GLUT_BITMAP_HELVETICA_12, "Enter 3 integers between 0-100 seperated by spaces");
+        displayString(30.0f / win_width, box_h - (48.0f / win_height), GLUT_BITMAP_HELVETICA_12, "Enter 3 integers between 0-100 seperated by spaces");
         
         // User input
-        displayString(box_x + (30.0f / win_width), box_y + box_h - (100.0f / win_height), GLUT_BITMAP_TIMES_ROMAN_24, s.c_str());
+        displayString(30.0f / win_width, box_h - (100.0f / win_height), GLUT_BITMAP_TIMES_ROMAN_24, s.c_str());
         
         // Further instructions
         glColor3f(1.0f, 0.0f, 0.0f);
-        displayString(box_x + (85.0f / win_width), box_y + (30.0f / win_height), GLUT_BITMAP_HELVETICA_12, "Press [ENTER] to continue, [ESC] to exit");
+        displayString(85.0f / win_width, 30.0f / win_height, GLUT_BITMAP_HELVETICA_12, "Press [ENTER] to continue, [ESC] to exit");
         
         // Back to defaults
         glEnable(GL_DEPTH_TEST);
@@ -1061,7 +1065,7 @@ void displayHelp()
 
         // positions box in the middle
         GLfloat box_x = 0.5f - box_w * 0.5f,
-                box_y = 0.5f - box_w * 0.5f;
+                box_y = 0.5f - box_h * 0.5f;
 
         // loads 2D projection
         glMatrixMode(GL_PROJECTION);
@@ -1081,15 +1085,16 @@ void displayHelp()
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
         glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
 
+        glTranslatef(box_x, box_y, 0.0f);
         glBegin(GL_QUADS);
         glTexCoord2f(0.0f, 1.0f);
-        glVertex2f(box_x, box_y);
+        glVertex2f(0.0f, 0.0f);
         glTexCoord2f(1.0f, 1.0f);
-        glVertex2f(box_x + box_w, box_y);
+        glVertex2f(box_w, 0.0f);
         glTexCoord2f(1.0f, 0.0f);
-        glVertex2f(box_x + box_w, box_y + box_h);
+        glVertex2f(box_w, box_h);
         glTexCoord2f(0.0f, 0.0f);
-        glVertex2f(box_x, box_y + box_h);
+        glVertex2f(0.0f, box_h);
         glEnd();
 
         // Back to default
